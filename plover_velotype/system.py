@@ -3,8 +3,8 @@ from plover.system import english_stenotype
 KEYS = (
   'Z-', 'F-', 'S-', 'P-', 'T-', 'C-', 'K-', 'J-', 'R-', 'I-', 'O-', 'E-', "'-", 'U-', 'A-',
   'L-', 'N-', 'Y-', '`-', # shift
-  'CAPS',
-  'NOSPACE',
+  'H',
+  ' ',
   '-L', '-N', '-Y', '-`', # shift
   "'-", 'U-', 'A-', '-O', '-I', '-E', '-K', '-J', '-R', '-P', '-T', '-C', '-F', '-S', '-Z', 
 )
@@ -46,8 +46,8 @@ KEYMAPS = {
     'Y-': 'b',
     '`-': 'z',
     # shift
-    'CAPS': 'alt',
-    'NOSPACE': 'space',
+    'H': 'alt',
+    ' ': 'space',
     '-L': ',',
     '-N': 'm',
     '-Y': 'n',
