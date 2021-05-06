@@ -75,4 +75,4 @@ KEYMAPS = {
 }
 
 DICTIONARIES_ROOT = 'asset:plover_velotype:assets'
-DEFAULT_DICTIONARIES = ('user.json', 'commands.json', 'main.json')
+DEFAULT_DICTIONARIES = ('velo_user.json', 'velo_commands.json', 'velo_main.json')
