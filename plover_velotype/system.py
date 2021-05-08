@@ -1,6 +1,6 @@
 from plover.system import english_stenotype
 
-# ZFSPTCKJR LN H Y IOE'UA [# - #] 'UAOIE Y LN KJRPTCFSZ _ 
+# ZFSPTCKJR LN H ´ IOE 'UAY# OIE ` NL KJRPTCFSZ _
 
 KEYS = (
     # LHS consonants fingers
@@ -9,37 +9,77 @@ KEYS = (
     'L-', 'N-',
     # LHS heel
     'H-',
-    # LHS vowels thumb
-    'Y-',
-    # LHS vowels fingers
-    'I-', 'O-', 'E-', "'-", 'U-', 'A-',
     # LHS syms thumb
-    '[-', '#-',
-    # RHS syms thumb
-    '-#', '-]',
+    '´-',
+    # LHS vowels fingers
+    'I-', 'O-', 'E-',
+    # Shared vowels fingers
+    "'", 'U', 'A',
+    # Shared vowels thumb
+    'Y',
+    # shifts
+    '#',
     # RHS vowels fingers
-    "-'", '-U', '-A', '-O', '-I', '-E',
-    # RHS vowels thumb
-    '-Y',
+    '-O', '-I', '-E',
+    # RHS syms thumb
+    '-`',
     # RHS consonants thumb
-    '-L', '-N',
+    '-N', '-L',
     # RHS consonants fingers
     '-K', '-J', '-R', '-P', '-T', '-C', '-F', '-S', '-Z',
     # RHS heel
     '-_',
 )
 
+# not part of the system definition, used in the Velotype Extension
 INIT_CON_KEYS = 'ZFSPTCKJRLNH'
-VOWEL_KEYS = 'YIOE\'UA[#-#]\'UAOIEY'
-FINAL_CON_KEYS = 'LNKJRPTCFSZ_'
+VOWEL_KEYS = '´IOE-\'UAY#OIE`'
+FINAL_CON_KEYS = 'NLKJRPTCFSZ_'
+META_KEYS = ('<', '=', '>') # these should not be used, as they mark special strokes
+# end of custom section
 
-IMPLICIT_HYPHEN_KEYS = ()
+IMPLICIT_HYPHEN_KEYS = ("'", 'U', 'A', 'Y', '#', '8', '5', '2', '0')
 
 SUFFIX_KEYS = ('-_',)
 
 NUMBER_KEY = '#'
 
-NUMBERS = {}
+NUMBERS = {
+    'Z-': '@-',
+    'F-': '£-',
+    'S-': '$-',
+    'P-': '%-',
+    'T-': 's-', # should be '/', but that is an invalid stroke
+    'C-': '(-',
+    'K-': '&-',
+    'J-': '*-',
+    'R-': '+-',
+    'L-': '€-',
+    'N-': ',-',
+    '´-': '~-',
+    'I-': '7-',
+    'O-': '4-',
+    'E-': '1-',
+    "'": '8',
+    'U': '5',
+    'A': '2',
+    'Y': '0',
+    '-O': '-9',
+    '-I': '-6',
+    '-E': '-3',
+    '-`': '-¨',
+    '-N': '-.',
+    '-L': '-_',
+    '-K': '-?',
+    '-J': '-e', # should be '=', but that is used for special purposes
+    '-R': '-d', # should be '-', but that is an invalid stroke
+    '-P': '-!',
+    '-T': '-;',
+    '-C': '-)',
+    '-F': "-'",
+    '-S': '-:',
+    '-Z': '-h', # should be '#', but that is already a stroke
+}
 
 UNDO_STROKE_STENO = 'SN-NS'
 
@@ -50,51 +90,45 @@ ORTHOGRAPHY_WORDLIST = None
 
 KEYMAPS = {
     'Keyboard': {
-      'L-': 'c',
-      'N-': 'v',
-      'Y-': 'b',
-      '[-': 'z',
-      '#-': 'x',
-      'Z-': 'Tab',
-      'F-': 'q',
-      'S-': 'a',
-      'P-': '2',
-      'T-': 'w',
-      'C-': 's',
-      'K-': '3',
-      'J-': 'e',
-      'R-': 'd',
-      'I-': '4',
-      'O-': 'r',
-      'E-': 'f',
-      "'-": '5',
-      'U-': 't',
-      'A-': 'g',
-      'H-': '[',
-      "-'": '6',
-      '-U': 'y',
-      '-A': 'h',
-      '-O': '7',
-      '-I': 'u',
-      '-E': 'j',
-      '-K': '8',
-      '-J': 'i',
-      '-R': 'k',
-      '-P': '9',
-      '-T': 'o',
-      '-C': 'l',
-      '-F': 'p',
-      '-S': ';',
-      '-Z': "'",
-      '-L': ',',
-      '-N': 'm',
-      '-Y': 'n',
-      '-#': '.',
-      '-]': '/',
-      '-_': ']',
-      'arpeggiate': 'space',
-      # Suppress adjacent keys to prevent miss-strokes.
-      'no-op': (),
+        'Z-': 'a',
+        'F-': 'w',
+        'S-': 's',
+        '#': 'x',
+        'P-': '3',
+        'T-': 'e',
+        'C-': 'd',
+        '´-': 'c',
+        'K-': '4',
+        'J-': 'r',
+        'R-': 'f',
+        'L-': 'v',
+        'I-': '5',
+        'O-': 't',
+        'E-': 'g',
+        'N-': 'b',
+        'H-': 'z',
+        "'": '6',
+        'U': 'y',
+        'A': 'h',
+        'Y': 'n',
+        '-O': '7',
+        '-I': 'u',
+        '-E': 'j',
+        '-N': 'm',
+        '-K': '8',
+        '-J': 'i',
+        '-R': 'k',
+        '-L': ',',
+        '-P': '9',
+        '-T': 'o',
+        '-C': 'l',
+        '-`': '.',
+        '-F': 'p',
+        '-S': ';',
+        '-Z': "'",
+        '-_': 'space',
+        'arpeggiate': 'Return',
+        'no-op': ('`', '1', '2', '0', '-', '=', 'q', '[', ']', '/'),
     },
 }
 
@@ -102,10 +136,7 @@ DICTIONARIES_ROOT = 'asset:plover_velotype:assets'
 DEFAULT_DICTIONARIES = (
     'velo_user.json',
     'velo_commands.json',
-    'velo_initial_consonants.json',
-    'velo_vowels.json',
-    'velo_final_consonants.json',
-    'velo_combinations.json',
-    'velo_special.json',
+    'velo_english_basic.json',
+    'velo_base.json',
 )
 

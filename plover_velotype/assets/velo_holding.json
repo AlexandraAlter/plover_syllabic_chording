@@ -62,4 +62,9 @@
   "O-IEJ": "aay",
   "E-ENJ": "eew",
   "-IENJ": "iew",
+
+  "K-": "jh",
+  "P-": "lch",
+  "F-": "mbs",
+  "Y-": "rye",
 }

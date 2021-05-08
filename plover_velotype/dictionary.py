@@ -26,16 +26,14 @@ class VeloDictionaryCollection:
     def __getattr__(self, attr):
         return getattr(self.proxy, attr)
 
-    def _split_stroke(self, key):
-        # TODO this is definitely the wrong way to do this, but for now it'll do
-        key = key[-1]
-
+    # abbreviations: ic=initial consonants, fc=final consonants, v=vowels
+    def _split_stroke(self, stroke):
         found_vowels = False
         found_finals = False
-        point1 = len(key)
-        point2 = len(key)
+        point1 = len(stroke)
+        point2 = len(stroke)
 
-        for i, c in enumerate(key):
+        for i, c in enumerate(stroke):
             if not found_vowels and c not in INIT_CON_KEYS:
                 found_vowels = True
                 point1 = i
@@ -43,52 +41,64 @@ class VeloDictionaryCollection:
                 point2 = i
                 break
 
-        init_cons, vowels, final_cons = key[:point1], key[point1:point2], key[point2:]
+        ic, v, fc = stroke[:point1], stroke[point1:point2], stroke[point2:]
 
-        norm_init_cons = normalize_steno(init_cons) if len(init_cons) > 0 else None
-        norm_vowels = normalize_steno(vowels) if len(vowels) > 0 and vowels != '-' else None
-        norm_final_cons = normalize_steno('-' + final_cons) if len(final_cons) > 0 else None
+        norm_ic = ('<',) + normalize_steno(ic) if ic else None
+        norm_v = ('=',) + normalize_steno(v) if v and v != '-' else None
+        norm_fc = ('>',) + normalize_steno('-' + fc) if fc else None
+        norm_ic_v = ('<=',) + normalize_steno(ic + v) if ic and v else None
+        norm_v_fc = ('=>',) + normalize_steno(v + fc) if v and fc else None
 
-        return (norm_init_cons, norm_vowels, norm_final_cons)
+        group_l = (norm_ic_v, norm_fc) if norm_ic_v else None
+        group_r = (norm_ic, norm_v_fc) if norm_v_fc else None
+        group_a = (norm_ic, norm_v, norm_fc)
+
+        return (group_l, group_r, group_a)
 
     def _lookup(self, key, dicts=None, filters=()):
         def real_lookup(v):
             return self.proxy._lookup(v, dicts=dicts, filters=filters)
 
-        full_match = real_lookup(key)
-        if full_match is not None:
+        if full_match := real_lookup(key):
             return full_match
 
-        split_stroke = self._split_stroke(key)
-        split_stroke_matches = list(real_lookup(s) if s else '{}' for s in split_stroke)
+        if len(key) == 1:
+            stroke_groups = self._split_stroke(key[0])
 
-        print(key, split_stroke, split_stroke_matches)
-        if all(split_stroke_matches):
-            return ''.join(split_stroke_matches)
+            for stroke_group in stroke_groups:
+                if not stroke_group or not any(stroke_group):
+                    continue
+                matches = list(real_lookup(s) if s else '{}' for s in stroke_group)
+                print(key, stroke_group, matches)
+                if all(matches):
+                    return ''.join(matches)
 
     def _lookup_from_all(self, key, dicts=None, filters=()):
         def real_lookup(v):
             return self.proxy._lookup_from_all(v, dicts=dicts, filters=filters)
 
-        full_match = real_lookup(key)
-        if full_match is not None:
+        if full_match := real_lookup(key):
             return full_match
 
-        split_stroke = self._split_stroke(key)
-        split_stroke_matches = list(real_lookup(s) if s else '{}' for s in split_stroke)
+        if len(key) == 1:
+            stroke_groups = self._split_stroke(key[0])
 
-        print(key, split_stroke, split_stroke_matches)
-        if all(split_stroke_matches):
-            return ''.join(split_stroke_matches)
+            for stroke_group in stroke_groups:
+                if not stroke_group or not any(stroke_group):
+                    continue
+                matches = list(real_lookup(s) if s else '{}' for s in stroke_group)
+                print(key, stroke_group, matches)
+                if all(matches):
+                    return ''.join(matches)
 
     def lookup(self, key):
-        return self._lookup(key, filters=self.filters)
+        return self._lookup(key, filters=self.proxy.filters)
 
     def raw_lookup(self, key):
         return self._lookup(key)
-    
+
     def lookup_from_all(self, key):
-        return self._lookup_from_all(key, filters=self.filters)
+        return self._lookup_from_all(key, filters=self.proxy.filters)
 
     def raw_lookup_from_all(self, key):
         return self._lookup_from_all(key)
