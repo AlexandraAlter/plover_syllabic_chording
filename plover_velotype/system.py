@@ -61,8 +61,8 @@ V_FC_KEYS = V_KEYS + FC_KEYS
 V_FC_META = V_META + FC_META
 # end of custom section
 
-# this is intentionally left empty, as it might break the dictionary
-IMPLICIT_HYPHEN_KEYS = ()
+# this is intentionally restricted to hyphen-less keys
+IMPLICIT_HYPHEN_KEYS = ("'", 'U', 'A', 'Y', '8', '5', '2', '0')
 
 # this is intentionally left empty
 SUFFIX_KEYS = ()
@@ -127,38 +127,38 @@ KEYMAPS = {
         'P-': '3',
         'T-': 'e',
         'C-': 'd',
-        '´-': 'c',
         'K-': '4',
         'J-': 'r',
         'R-': 'f',
         'L-': 'v',
         'I-': '5',
-        'O-': 't',
+        'O-': 'y',
         'E-': 'g',
         'N-': 'b',
         'H-': 'z',
+        '´-': 'c',
         "'": '6',
-        'U': 'y',
+        'U': 'u',
         'A': 'h',
         'Y': 'n',
-        '#': 'x',
+        '#': ('x', '/'),
         '-O': '7',
-        '-I': 'u',
+        '-I': 'i',
         '-E': 'j',
         '-N': 'm',
         '-K': '8',
-        '-J': 'i',
+        '-J': 'o',
         '-R': 'k',
         '-L': ',',
         '-P': '9',
-        '-T': 'o',
+        '-T': 'p',
         '-C': 'l',
         '-`': '.',
-        '-F': 'p',
+        '-F': '[',
         '-S': ';',
         '-Z': "'",
         'arpeggiate': 'Return',
-        'no-op': ('`', '1', '2', '0', '-', '=', 'q', '[', ']', '/', '\\'),
+        'no-op': ('`', '1', '2', '0', '-', '=', 'q', ']', '\\'),
     },
 }
 
@@ -173,7 +173,7 @@ KEYMAPS['KeyboardPlus'].update({
     '✦-': 'F20',
     'H-': ('z', 'F14'),
     '_-': ('space', 'F15'),
-    '#': ('x', 'F16'),
+    '#': ('x', '/', 'F16'),
 })
 
 DICTIONARIES_ROOT = 'asset:plover_velotype:assets'

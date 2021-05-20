@@ -134,6 +134,8 @@ class VeloDictionaryCollection:
                 log.stroke(f'split stroke {strokes} into {stroke_group} and matched {matches}')
                 return pref_match + ''.join(matches) + suff_match
 
+        log.stroke(f'failed to split stroke {strokes}')
+
 
     def _lookup(self, strokes, dicts=None, filters=()):
         def lookup_fn(v):
