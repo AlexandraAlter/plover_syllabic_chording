@@ -11,16 +11,11 @@
 
 from plover import log, system
 from plover.steno_dictionary import StenoDictionaryCollection
-# from plover.steno import normalize_steno, normalize_stroke
 from plover_velotype.system import (
-    META_KEYS,
-    PREFIX_KEYS, PREFIX_META,
-    IC_KEYS, IC_META,
-    V_KEYS, V_META,
-    FC_KEYS, FC_META,
-    SUFFIX_KEYS, SUFFIX_META,
-    IC_V_KEYS, IC_V_META,
-    V_FC_KEYS, V_FC_META,
+    PREFIX_G, IC_G, ACC_V_G, FC_G,
+    TV_G, V_G, SYM_G,
+    L_COMB_G, R_COMB_G, ALL_G,
+    IMPLICIT_HYPHEN_KEYS,
     UNDO_STROKE_STENO,
 )
 
@@ -28,18 +23,11 @@ from plover_velotype.system import (
 class VeloDictionaryCollection:
     def __init__(self, proxy):
         if not isinstance(proxy, StenoDictionaryCollection):
-            raise RuntimeError(
-                "Trying to proxy something that isn't a StenoDictionaryCollection"
-            )
+            raise RuntimeError('Must proxy StenoDictionaryCollection')
         self.proxy = proxy
 
     def __getattr__(self, attr):
         return getattr(self.proxy, attr)
-
-    def _extract_space(self, strokes):
-        space_state = SPACE_KEY in strokes[-1]
-        strokes = strokes[:-1] + (strokes[-1].replace(SPACE_KEY, ''),)
-        return strokes, space_state
 
     def _split_stroke(self, stroke):
         def normalize(stroke):
@@ -49,61 +37,78 @@ class VeloDictionaryCollection:
                 return None
             return stroke
 
-        def slice(stroke, start=0, filter=''):
-            if len(filter) == 0:
-                return None, start
-            f_index = 0
+        def qualify(stroke, group):
+            norm = normalize(stroke)
+            return (group.meta, norm) if norm else None
+
+        def find_midpoint(stroke):
+            midpoint_l = None
+            midpoint_r = None
             for i, c in enumerate(stroke):
-                if i < start:
-                    continue
-                while c != filter[f_index]:
-                    f_index += 1
-                    if f_index >= len(filter):
-                        return normalize(stroke[start:i]), i
-            return normalize(stroke[start:]), len(stroke)
+                if (midpoint_l is None and
+                        (c in IMPLICIT_HYPHEN_KEYS or c == '-')):
+                    midpoint_l = i
+                elif (midpoint_l is not None and
+                        c not in IMPLICIT_HYPHEN_KEYS and c != '-'):
+                    midpoint_r = i
+                    break
 
-        # filtered keys
-        # i_* variables represent the end of sections
-        pref, i_pref = slice(stroke, filter=PREFIX_KEYS)
-        ic, i_ic = slice(stroke, start=i_pref, filter=IC_KEYS)
-        v, i_v = slice(stroke, start=i_ic, filter=V_KEYS)
-        fc, i_fc = slice(stroke, start=i_v, filter=FC_KEYS)
-        suff, i_suff = slice(stroke, start=i_fc, filter=SUFFIX_KEYS)
-        ic_v, i_ic_v = slice(stroke, start=i_pref, filter=IC_V_KEYS)
-        v_fc, i_v_fc = slice(stroke, start=i_ic, filter=V_FC_KEYS)
-        keys = normalize(stroke[i_pref:i_fc])
-        # pref = ''.join(k for k in stroke if k in PREFIX_KEYS)
-        # suff = ''.join(k for k in stroke if k in SUFFIX_KEYS)
-        # keys = ''.join(k for k in stroke if k not in PREFIX_KEYS or k not in SUFFIX_KEYS)
-        # ic = ''.join(k for k in left if k in IC_KEYS)
-        # v = ''.join(k for k in keys if k in V_KEYS)
-        # fc = ''.join(k for k in dash + right if k in FC_KEYS)
+            if midpoint_l is None:
+                midpoint_l = len(stroke)
+            if midpoint_r is None:
+                midpoint_r = len(stroke)
 
-        # qualified keys
-        # blank strokes are also filtered out
-        q_pref = (PREFIX_META, pref) if pref else None
-        q_suff = (SUFFIX_META, suff) if suff else None
-        q_keys = (keys,) if keys else None
-        q_ic = (IC_META, ic) if ic else None
-        q_v = (V_META, v) if v else None
-        q_fc = (FC_META, '-' + fc) if fc else None
-        q_ic_v = (IC_V_META, ic_v) if ic_v else None
-        q_v_fc = (V_FC_META, v_fc) if v_fc else None
+            return (midpoint_l, midpoint_r)
 
-        # norm_ic = (META_IC,) + normalize_steno(ic) if ic else None
-        # norm_v = (META_V,) + normalize_steno(v) if v and v != '-' else None
-        # norm_fc = (META_FC,) + normalize_steno('-' + fc) if fc else None
-        # norm_ic_v = (META_ICV,) + normalize_steno(ic + v) if ic and v else None
-        # norm_v_fc = (META_VFC,) + normalize_steno(v + fc) if v and fc else None
+        def extract(stroke, group, mid_l, mid_r):
+            """Extract a sub-stroke according to a group.
+            Return a qualified sub-stroke."""
+            if not group or not stroke:
+                return None
+
+            if group.rhs_only:
+                stroke = '-' + stroke[mid_r:]
+            elif group.lhs_only:
+                stroke = stroke[:mid_l]
+            elif not any(c == '-' for c in stroke):
+                stroke = stroke[:mid_l] + '-' + stroke[mid_l:]
+
+            filtered = ''.join(c for c in stroke if c in group.keys)
+
+            if filtered == '-':
+                return None
+
+            if any(c in IMPLICIT_HYPHEN_KEYS for c in filtered):
+                filtered = ''.join(c for c in filtered if c != '-')
+
+            return qualify(filtered, group)
+
+        mid_l, mid_r = find_midpoint(stroke)
+
+        # filtered and qualified keys
+
+        # extracted sections
+        pref = extract(stroke, PREFIX_G, mid_l, mid_r)
+        ic = extract(stroke, IC_G, mid_l, mid_r)
+        acc_v = extract(stroke, ACC_V_G, mid_l, mid_r)
+        fc = extract(stroke, FC_G, mid_l, mid_r)
+
+        tv = extract(stroke, TV_G, mid_l, mid_r)
+        v = extract(stroke, V_G, mid_l, mid_r)
+        sym = extract(stroke, SYM_G, mid_l, mid_r)
+
+        l_comb = extract(stroke, L_COMB_G, mid_l, mid_r)
+        r_comb = extract(stroke, R_COMB_G, mid_l, mid_r)
+        keys = extract(stroke, ALL_G, mid_l, mid_r)
 
         # grouped keys
-        # all, left, right, each
-        group_a = (q_keys,) if q_keys else None
-        group_l = (q_ic_v, q_fc) if q_ic_v else None
-        group_r = (q_ic, q_v_fc) if q_v_fc else None
-        group_e = (q_ic, q_v, q_fc) if q_ic or q_v or q_fc else None
+        group_1 = (keys,) if keys else None
+        group_2 = (l_comb, sym, fc) if l_comb else None
+        group_3 = (ic, sym, r_comb) if r_comb else None
+        group_4 = (ic, acc_v, fc) if ic or acc_v or fc else None
+        group_5 = (ic, tv, v, sym, fc) if ic or tv or v or sym or fc else None
 
-        return (q_pref, q_suff, (group_a, group_l, group_r, group_e))
+        return (pref, (group_1, group_2, group_3, group_4, group_5))
 
     def _generic_lookup(self, lookup_fn, strokes, dicts, filters):
         if strokes[-1] == UNDO_STROKE_STENO:
@@ -118,12 +123,12 @@ class VeloDictionaryCollection:
         if len(strokes) > 1:
             return None
 
-        pref, suff, stroke_groups = self._split_stroke(strokes[-1])
+        pref, stroke_groups = self._split_stroke(strokes[-1])
+        log.stroke(f'stroke groups {stroke_groups}')
 
         pref_match = lookup_fn(pref) if pref else ''
-        suff_match = lookup_fn(suff) if suff else ''
-        if pref_match is None or suff_match is None:
-            log.stroke(f'failed to match prefixes {pref} or suffixes {suff}')
+        if pref_match is None:
+            log.stroke(f'failed to match prefixes {pref}')
             return None
 
         for stroke_group in stroke_groups:
@@ -132,7 +137,7 @@ class VeloDictionaryCollection:
             matches = list(lookup_fn(s) for s in stroke_group if s)
             if all(matches):
                 log.stroke(f'split stroke {strokes} into {stroke_group} and matched {matches}')
-                return pref_match + ''.join(matches) + suff_match
+                return pref_match + ''.join(matches)
 
         log.stroke(f'failed to split stroke {strokes}')
 

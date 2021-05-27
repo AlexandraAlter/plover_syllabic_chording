@@ -3,15 +3,18 @@
       ic=initial consonants
       fc=final consonants
       v=vowels
+      tv=thumb vowels
+      sym=symbols
+      acc=accented
 """
+
+from dataclasses import dataclass
 
 from plover.system import english_stenotype
 
-# ZFSPTCKJR LN H ´ IOE 'UAY# OIE ` NL KJRPTCFSZ _
+# ZFSPTCKJR LN H ´ IOE 'UAY OIE ` NL KJRPTCFSZ _
 
 KEYS = (
-    # Modifier keys
-    '⇧-', '⎈-', '◆-', '❖-', '✦-',
     # RHS heel
     '_-',
     # LHS consonants fingers
@@ -20,19 +23,21 @@ KEYS = (
     'L-', 'N-',
     # LHS heel
     'H-',
-    # LHS syms thumb
+    # LHS thumb syms
     '´-',
     # LHS vowels fingers
     'I-', 'O-', 'E-',
+    # Finger syms
+    "'",
     # Shared vowels fingers
-    "'", 'U', 'A',
+    'U', 'A',
     # Shared vowels thumb
     'Y',
     # shifts
     '#',
     # RHS vowels fingers
     '-O', '-I', '-E',
-    # RHS syms thumb
+    # RHS thumb syms
     '-`',
     # RHS consonants thumb
     '-N', '-L',
@@ -40,25 +45,40 @@ KEYS = (
     '-K', '-J', '-R', '-P', '-T', '-C', '-F', '-S', '-Z',
 )
 
-# not part of the system definition, used in the Velotype Extension
-META_KEYS = '«<=>»' # these should not be used, as they mark special strokes
 
+@dataclass
+class VeloGroup:
+    """A convenience class for storing groups of keys that are looked up together"""
+    meta: str
+    keys: str
+    lhs_only: bool = False
+    rhs_only: bool = False
+
+    def __add__(self, other):
+        if not isinstance(other, VeloGroup):
+            raise ValueError('Cannot add a VeloGroup to a non-Velogroup')
+        keys = self.keys + other.keys
+        rhs_only = self.rhs_only and other.rhs_only
+        lhs_only = self.lhs_only and other.lhs_only
+        return VeloGroup(self.meta + other.meta, keys, rhs_only, lhs_only)
+
+
+# used in the Velotype Extension
 # these MUST be in steno order because of assumptions made in the extension
-PREFIX_KEYS = '⇧⎈◆❖✦_'
-PREFIX_META = '«'
-IC_KEYS = 'ZFSPTCKJRLNH'
-IC_META = '<'
-V_KEYS = "´IOE-'UAY#OIE`"
-V_META = '='
-FC_KEYS = 'NLKJRPTCFSZ'
-FC_META = '>'
-SUFFIX_KEYS = ''
-SUFFIX_META = '»'
+# meta-strokes are used to define and protect split strokes from being picked up
+# meta-strokes (+«<=>») must not be used to define regular strokes
+PREFIX_G = VeloGroup('+', '_')
+IC_G = VeloGroup('«', 'ZFSPTCKJRLNH', lhs_only=True)
+ACC_V_G = VeloGroup('<=>', "´IOE-'UAYOIE`")
+FC_G = VeloGroup('»', '-NLKJRPTCFSZ', rhs_only=True)
 
-IC_V_KEYS = IC_KEYS + V_KEYS
-IC_V_META = IC_META + V_META
-V_FC_KEYS = V_KEYS + FC_KEYS
-V_FC_META = V_META + FC_META
+TV_G = VeloGroup('<', 'Y')
+V_G = VeloGroup('=', 'IOE-UAOIE')
+SYM_G = VeloGroup('>', "´'`")
+
+L_COMB_G = IC_G + ACC_V_G
+R_COMB_G = ACC_V_G + FC_G
+ALL_G = IC_G + ACC_V_G + FC_G
 # end of custom section
 
 # this is intentionally restricted to hyphen-less keys
@@ -70,40 +90,44 @@ SUFFIX_KEYS = ()
 NUMBER_KEY = '#'
 
 NUMBERS = {
-    'Z-': '@-',
-    'F-': '£-',
-    'S-': '$-',
     'P-': '%-',
-    'T-': 's-', # should be '/', but that is an invalid stroke
-    'C-': '(-',
     'K-': '&-',
-    'J-': '*-',
-    'R-': '+-',
-    'L-': '€-',
-    'N-': ',-',
-    '´-': '~-',
     'I-': '7-',
-    'O-': '4-',
-    'E-': '1-',
     "'": '8',
-    'U': '5',
-    'A': '2',
-    'Y': '0',
     '-O': '-9',
-    '-I': '-6',
-    '-E': '-3',
-    '-`': '-¨',
-    '-N': '-.',
-    '-L': '-_',
     '-K': '-?',
-    '-J': '-e', # should be '=', but that is used for special purposes
-    '-R': '-d', # should be '-', but that is an invalid stroke
     '-P': '-!',
+
+    'F-': '£-',
+    'T-': 's-', # should be '/', but that is an invalid stroke
+    'J-': '*-',
+    'O-': '4-',
+    'U': '5',
+    '-I': '-6',
+    '-J': '-e', # should be '=', but that is used as a meta character
     '-T': '-;',
-    '-C': '-)',
     '-F': "-'",
+
+    'Z-': '@-',
+    'S-': '$-',
+    'C-': '(-',
+    'R-': 'p-', # should be '+', but that is used as a meta character
+    'E-': '1-',
+    'A': '2',
+    '-E': '-3',
+    '-R': '-d', # should be '-', but that is an invalid stroke
+    '-C': '-)',
     '-S': '-:',
     '-Z': '-h', # should be '#', but that is already a stroke
+
+    'L-': '€-',
+    'N-': ',-',
+    'Y': '0',
+    '-N': '-.',
+    '-L': '-u', # should be '_', but that is used by NoSpace
+
+    '´-': '~-',
+    '-`': '-¨',
 }
 
 UNDO_STROKE_STENO = 'SN-NS'
@@ -115,65 +139,114 @@ ORTHOGRAPHY_WORDLIST = None
 
 KEYMAPS = {
     'Keyboard': {
-        '⇧-': 'F4',
-        '⎈-': 'F5',
-        '◆-': 'F6',
-        '❖-': 'F7',
-        '✦-': 'F8',
-        '_-': 'space',
-        'Z-': 'a',
-        'F-': 'w',
-        'S-': 's',
         'P-': '3',
-        'T-': 'e',
-        'C-': 'd',
         'K-': '4',
-        'J-': 'r',
-        'R-': 'f',
-        'L-': 'v',
         'I-': '5',
-        'O-': 'y',
-        'E-': 'g',
-        'N-': 'b',
-        'H-': 'z',
-        '´-': 'c',
-        "'": '6',
-        'U': 'u',
-        'A': 'h',
-        'Y': 'n',
-        '#': ('x', '/'),
+        "'":  '6',
         '-O': '7',
-        '-I': 'i',
-        '-E': 'j',
-        '-N': 'm',
         '-K': '8',
-        '-J': 'o',
-        '-R': 'k',
-        '-L': ',',
         '-P': '9',
-        '-T': 'p',
+
+        'F-': 'w',
+        'T-': 'e',
+        'J-': 'r',
+        'O-': 't',
+        'U':  'y',
+        '-I': 'u',
+        '-J': 'i',
+        '-T': 'o',
+        '-F': 'p',
+
+        'Z-': ('q', 'a'),
+        'S-': 's',
+        'C-': 'd',
+        'R-': 'f',
+        'E-': 'g',
+        'A':  'h',
+        '-E': 'j',
+        '-R': 'k',
         '-C': 'l',
-        '-`': '.',
-        '-F': '[',
         '-S': ';',
-        '-Z': "'",
+        '-Z': ('[', "'"),
+
+        'L-': 'v',
+        'N-': 'b',
+        'Y':  'n',
+        '-N': 'm',
+        '-L': ',',
+
+        '´-': 'c',
+        '#':  ('x', '/'),
+        '-`': '.',
+
+        '_-': 'space',
+        'H-': 'z',
+
         'arpeggiate': 'Return',
-        'no-op': ('`', '1', '2', '0', '-', '=', 'q', ']', '\\'),
+        'no-op': ('`', '1', '2', '0', '-', '=', ']', '\\'),
     },
+
+    'Gemini PR': {
+        'P-': '#3',
+        'K-': '#4',
+        'I-': '#5',
+        "'":  '#6',
+        '-O': '#7',
+        '-K': '#8',
+        '-P': '#9',
+
+        'F-': 'S1-',
+        'T-': 'T-',
+        'J-': 'P-',
+        'O-': 'H-',
+        'U':  '*1',
+        '-I': '-F',
+        '-J': '-P',
+        '-T': '-L',
+        '-F': '-T',
+
+        'Z-': 'res2',
+        'S-': 'S2-',
+        'C-': 'K-',
+        'R-': 'W-',
+        'E-': 'R-',
+        'A':  '*2',
+        '-E': '-R',
+        '-R': '-B',
+        '-C': '-G',
+        '-S': '-S',
+        '-Z': '-Z',
+
+        'L-': 'A-',
+        'N-': 'O-',
+        'Y':  'Fn',
+        '-N': '-E',
+        '-L': '-U',
+
+        '´-': '*3',
+        '#':  'res1',
+        '-`': '*4',
+
+        'H-': '#1',
+        '_-': '-D',
+    }
 }
 
 # mostly for plover_keyboardplus, but harmless otherwise
 # the higher F-keys are useful for binding to other devices, such as footpedals
-KEYMAPS['KeyboardPlus'] = KEYMAPS['Keyboard']
-KEYMAPS['KeyboardPlus'].update({
-    '⇧-': 'F13',
-    '⎈-': 'F17',
-    '◆-': 'F18',
-    '❖-': 'F19',
-    '✦-': 'F20',
+KEYMAPS['Keyboard Plus'] = KEYMAPS['Keyboard'].copy()
+KEYMAPS['Keyboard Plus'].update({
     'H-': ('z', 'F14'),
     '_-': ('space', 'F15'),
-    '#': ('x', '/', 'F16'),
+    '#':  ('x', '/', 'F16'),
+})
+
+# mostly for plover_geminiprfootpedal, but harmless otherwise
+KEYMAPS['Gemini PR With Footpedal'] = KEYMAPS['Gemini PR'].copy()
+KEYMAPS['Gemini PR With Footpedal'].update({
+    'H-': ('#1', 'F14'),
+    '_-': ('-D', 'F15'),
+    '#':  ('res1', 'F16'),
 })
 
 DICTIONARIES_ROOT = 'asset:plover_velotype:assets'
