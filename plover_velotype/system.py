@@ -229,8 +229,14 @@ KEYMAPS = {
 
         'H-': '#1',
         '_-': '-D',
-    }
+    },
 }
+
+# Normally this kind of duplication would be handled using KEYMAP_MACHINE_TYPE,
+#   but due to the way the keymap fallback is done, these layouts would lose their
+#   extra keys, so this exists as a patch for that issue.
+KEYMAPS['Gemini PR Footpedal'] = KEYMAPS['Gemini PR']
+KEYMAPS['Keyboard Plus'] = KEYMAPS['Keyboard']
 
 DICTIONARIES_ROOT = 'asset:plover_velotype:assets'
 DEFAULT_DICTIONARIES = (
