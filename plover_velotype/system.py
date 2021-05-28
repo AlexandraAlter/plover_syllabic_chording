@@ -232,23 +232,6 @@ KEYMAPS = {
     }
 }
 
-# mostly for plover_keyboardplus, but harmless otherwise
-# the higher F-keys are useful for binding to other devices, such as footpedals
-KEYMAPS['Keyboard Plus'] = KEYMAPS['Keyboard'].copy()
-KEYMAPS['Keyboard Plus'].update({
-    'H-': ('z', 'F14'),
-    '_-': ('space', 'F15'),
-    '#':  ('x', '/', 'F16'),
-})
-
-# mostly for plover_geminiprfootpedal, but harmless otherwise
-KEYMAPS['Gemini PR With Footpedal'] = KEYMAPS['Gemini PR'].copy()
-KEYMAPS['Gemini PR With Footpedal'].update({
-    'H-': ('#1', 'F14'),
-    '_-': ('-D', 'F15'),
-    '#':  ('res1', 'F16'),
-})
-
 DICTIONARIES_ROOT = 'asset:plover_velotype:assets'
 DEFAULT_DICTIONARIES = (
     'velo_user.json',
