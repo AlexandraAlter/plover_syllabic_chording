@@ -10,13 +10,22 @@ While every attempt will be made to fix any bugs found in this project, nothing 
 ## Affiliation
 
 This project is not affiliated with the makers of the Velotype keyboard in any way,
-it's just a crude approximation of the keyboard's functioning onto Plover.
+it's just a crude approximation of the keyboard's functioning onto Plover,
+made by an ameteur.
 
 ## Installation
 
 This package provides a Plover System and and Extension.
 Without the extension active, strokes will not be split up correctly, and the keyboard will not work.
 If the system is set to anything other than Velotype, the extension will not interfere with normal operation.
+
+## Recommended Keyboard
+
+The palm keys used for the H and NoSpace buttons of the Velotype are hard to emulate.
+A configurable keyboard might give you a decently workable setup, or replacing one of the side Z-keys.
+Personally, I use a foot pedal for H, NoSpace, and Shift, with the foot pedal mapped to F14-F16.
+
+I made two other plugins to help make this possible: [Plover Keyboard Plus](https://github.com/AlexandraAlter/plover_keyboard_plus) and [Plover Gemini PR Footpedal](https://github.com/AlexandraAlter/plover_geminipr_footpedal)
 
 ## Velotype Theory
 
@@ -61,5 +70,4 @@ The last combination to be checked is each sub-section, independantly of the oth
 These rules apply to entries made in the velo_user.json dictionary too.
 It's best to ensure that the meta-stroke each entry is prefixed with exactly matches the keys that make up the stroke,
 else some keys may mysteriously go missing.
-
 
