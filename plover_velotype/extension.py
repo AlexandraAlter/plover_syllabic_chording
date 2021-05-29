@@ -1,4 +1,4 @@
-from plover import log
+from plover import log, system
 
 from plover_velotype.dictionary import VeloDictionaryCollection
 
@@ -8,6 +8,10 @@ class VeloExtension:
         self.engine = engine
 
     def proxy_dicts(self, dictionaries):
+        if system.NAME != 'Velotype':
+            log.info('velotype extension: ignoring non-Velotype system')
+            return
+
         log.info('velotype extension: proxying the dictionary')
 
         if not isinstance(self.engine.dictionaries, VeloDictionaryCollection):
@@ -16,6 +20,10 @@ class VeloExtension:
             self.engine._translator.set_dictionary(new_dicts)
 
     def unproxy_dicts(self):
+        if system.NAME != 'Velotype':
+            log.info('velotype extension: ignoring non-Velotype system')
+            return
+
         log.info('velotype extension: unproxying the dictionary')
 
         if isinstance(self.engine.dictionaries, VeloDictionaryCollection):
