@@ -27,6 +27,8 @@ Personally, I use a foot pedal for H, NoSpace, and Shift, with the foot pedal ma
 
 I made two other plugins to help make this possible: [Plover Keyboard Plus](https://github.com/AlexandraAlter/plover_keyboard_plus) and [Plover Gemini PR Footpedal](https://github.com/AlexandraAlter/plover_geminipr_footpedal)
 
+The keyboard used is a Moonlander MK1, and the configuration is provided here: [AlexandraAlter's QMK](https://github.com/AlexandraAlter/qmk_firmware/tree/master/keyboards/moonlander/keymaps/AlexandraAlter)
+
 ## Velotype Theory
 
 A full discussion of the theory behind the Velotype would be too big to fit in this readme, but an outline will do.
