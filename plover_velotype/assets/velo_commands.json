@@ -7,5 +7,5 @@
   "T-T": "{#tab}",
   "SN-NS": "=undo",
   "CR-RC": "=undo",
-  "H#-": "{:toggle_caps}"
+  "#H-": "{:toggle_caps}"
 }
