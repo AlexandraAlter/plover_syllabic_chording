@@ -8,13 +8,19 @@
       v=vowels
 """
 
-
-from plover import log, system
+from plover import log
 from plover.steno_dictionary import StenoDictionaryCollection
 from plover_velotype.system import (
-    PREFIX_G, IC_G, ACC_V_G, FC_G,
-    TV_G, V_G, SYM_G,
-    L_COMB_G, R_COMB_G, ALL_G,
+    PREFIX_G,
+    IC_G,
+    ACC_V_G,
+    FC_G,
+    TV_G,
+    V_G,
+    SYM_G,
+    L_COMB_G,
+    R_COMB_G,
+    ALL_G,
     IMPLICIT_HYPHEN_KEYS,
     UNDO_STROKE_STENO,
 )
@@ -24,10 +30,15 @@ class VeloDictionaryCollection:
     def __init__(self, proxy):
         if not isinstance(proxy, StenoDictionaryCollection):
             raise RuntimeError('Must proxy StenoDictionaryCollection')
-        self.proxy = proxy
+        self._proxy = proxy
 
     def __getattr__(self, attr):
-        return getattr(self.proxy, attr)
+        return getattr(self._proxy, attr)
+
+    def _drop_prefixes(self, stroke):
+        """Remove prefixes (NoSpace) from the stroke"""
+        s1 = stroke[-1].replace('_', '')
+        return (s1, )
 
     def _split_stroke(self, stroke):
         def normalize(stroke):
@@ -45,11 +56,11 @@ class VeloDictionaryCollection:
             midpoint_l = None
             midpoint_r = None
             for i, c in enumerate(stroke):
-                if (midpoint_l is None and
-                        (c in IMPLICIT_HYPHEN_KEYS or c == '-')):
+                if (midpoint_l is None
+                        and (c in IMPLICIT_HYPHEN_KEYS or c == '-')):
                     midpoint_l = i
-                elif (midpoint_l is not None and
-                        c not in IMPLICIT_HYPHEN_KEYS and c != '-'):
+                elif (midpoint_l is not None and c not in IMPLICIT_HYPHEN_KEYS
+                      and c != '-'):
                     midpoint_r = i
                     break
 
@@ -102,17 +113,20 @@ class VeloDictionaryCollection:
         keys = extract(stroke, ALL_G, mid_l, mid_r)
 
         # grouped keys
-        group_1 = (keys,) if keys else None
+        group_1 = (keys, ) if keys else None
         group_2 = (l_comb, sym, fc) if l_comb else None
         group_3 = (ic, sym, r_comb) if r_comb else None
         group_4 = (ic, acc_v, fc) if ic or acc_v or fc else None
         group_5 = (ic, tv, v, sym, fc) if ic or tv or v or sym or fc else None
+        groups = (group_1, group_2, group_3, group_4, group_5)
 
-        return (pref, (group_1, group_2, group_3, group_4, group_5))
+        log.debug('split stroke %s into prefix %s and groups %s', stroke, pref,
+                  groups)
+        return (pref, groups)
 
     def _generic_lookup(self, lookup_fn, strokes, dicts, filters):
         if strokes[-1] == UNDO_STROKE_STENO:
-            log.stroke(f'ignoring undo stroke')
+            # ignore the undo stroke
             return None
 
         if full_match := lookup_fn(strokes):
@@ -123,12 +137,14 @@ class VeloDictionaryCollection:
         if len(strokes) > 1:
             return None
 
+        if full_match := lookup_fn(self._drop_prefixes(strokes)):
+            return full_match
+
         pref, stroke_groups = self._split_stroke(strokes[-1])
-        log.stroke(f'stroke groups {stroke_groups}')
 
         pref_match = lookup_fn(pref) if pref else ''
         if pref_match is None:
-            log.stroke(f'failed to match prefixes {pref}')
+            log.debug('failed to match prefix %s', pref)
             return None
 
         for stroke_group in stroke_groups:
@@ -136,32 +152,32 @@ class VeloDictionaryCollection:
                 continue
             matches = list(lookup_fn(s) for s in stroke_group if s)
             if all(matches):
-                log.stroke(f'split stroke {strokes} into {stroke_group} and matched {matches}')
                 return pref_match + ''.join(matches)
 
-        log.stroke(f'failed to split stroke {strokes}')
-
+        log.debug(f'failed to match split stroke')
 
     def _lookup(self, strokes, dicts=None, filters=()):
         def lookup_fn(v):
-            return self.proxy._lookup(v, dicts=dicts, filters=filters)
+            return self._proxy._lookup(v, dicts=dicts, filters=filters)
 
         return self._generic_lookup(lookup_fn, strokes, dicts, filters)
 
     def _lookup_from_all(self, strokes, dicts=None, filters=()):
         def lookup_fn(v):
-            return self.proxy._lookup_from_all(v, dicts=dicts, filters=filters)
+            return self._proxy._lookup_from_all(v,
+                                                dicts=dicts,
+                                                filters=filters)
 
         return self._generic_lookup(lookup_fn, strokes, dicts, filters)
 
     def lookup(self, strokes):
-        return self._lookup(strokes, filters=self.proxy.filters)
+        return self._lookup(strokes, filters=self._proxy.filters)
 
     def raw_lookup(self, strokes):
         return self._lookup(strokes)
 
     def lookup_from_all(self, strokes):
-        return self._lookup_from_all(strokes, filters=self.proxy.filters)
+        return self._lookup_from_all(strokes, filters=self._proxy.filters)
 
     def raw_lookup_from_all(self, strokes):
         return self._lookup_from_all(strokes)

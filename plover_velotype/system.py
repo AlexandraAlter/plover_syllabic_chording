@@ -12,9 +12,11 @@ from dataclasses import dataclass
 
 from plover.system import english_stenotype
 
-# ZFSPTCKJR LN H ´ IOE 'UAY OIE ` NL KJRPTCFSZ _
+# _ ZFSPTCKJR LN H ´ IOE 'UAY OIE ` NL KJRPTCFSZ
 
 KEYS = (
+    # shifts
+    '#',
     # RHS heel
     '_-',
     # LHS consonants fingers
@@ -33,8 +35,6 @@ KEYS = (
     'U', 'A',
     # Shared vowels thumb
     'Y',
-    # shifts
-    '#',
     # RHS vowels fingers
     '-O', '-I', '-E',
     # RHS thumb syms
