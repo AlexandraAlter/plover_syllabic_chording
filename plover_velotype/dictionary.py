@@ -132,8 +132,6 @@ class VeloDictionaryCollection:
         if full_match := lookup_fn(strokes):
             return full_match
 
-        # TODO remove this once multi-stroke support has been added below
-        # or, remove this notice to force split strokes to never use history
         if len(strokes) > 1:
             return None
 
