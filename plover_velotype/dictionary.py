@@ -53,64 +53,55 @@ class VeloDictionaryCollection:
             return (group.meta, norm) if norm else None
 
         def find_midpoint(stroke):
-            midpoint_l = None
-            midpoint_r = None
             for i, c in enumerate(stroke):
-                if (midpoint_l is None
-                        and (c in IMPLICIT_HYPHEN_KEYS or c == '-')):
-                    midpoint_l = i
-                elif (midpoint_l is not None and c not in IMPLICIT_HYPHEN_KEYS
-                      and c != '-'):
-                    midpoint_r = i
-                    break
+                if (c in IMPLICIT_HYPHEN_KEYS or c == '-'):
+                    return i
 
-            if midpoint_l is None:
-                midpoint_l = len(stroke)
-            if midpoint_r is None:
-                midpoint_r = len(stroke)
+            return len(stroke)
 
-            return (midpoint_l, midpoint_r)
-
-        def extract(stroke, group, mid_l, mid_r):
+        def extract(stroke, group, mid):
             """Extract a sub-stroke according to a group.
             Return a qualified sub-stroke."""
             if not group or not stroke:
                 return None
 
-            if group.rhs_only:
-                stroke = '-' + stroke[mid_r:]
-            elif group.lhs_only:
-                stroke = stroke[:mid_l]
-            elif not any(c == '-' for c in stroke):
-                stroke = stroke[:mid_l] + '-' + stroke[mid_l:]
+            passed_dash = False
+            extracted = []
+            implicit_dash_found = False
 
-            filtered = ''.join(c for c in stroke if c in group.keys)
+            for k in stroke:
+                if not passed_dash and (k in IMPLICIT_HYPHEN_KEYS or k == '-'):
+                    passed_dash = True
+                    extracted.append('-')
+                expected_keys = group.right_keys if passed_dash else group.left_keys
+                if k in expected_keys:
+                    extracted.append(k)
 
-            if filtered == '-':
+            if len(extracted) == 1 and extracted[0] == '-':
                 return None
 
-            if any(c in IMPLICIT_HYPHEN_KEYS for c in filtered):
-                filtered = ''.join(c for c in filtered if c != '-')
+            if any(k in IMPLICIT_HYPHEN_KEYS for k in extracted):
+                extracted.remove('-')
 
-            return qualify(filtered, group)
+            return qualify(''.join(extracted), group)
 
-        mid_l, mid_r = find_midpoint(stroke)
+        mid = find_midpoint(stroke)
 
         # filtered and qualified keys
 
         # extracted sections
-        pref = extract(stroke, PREFIX_G, mid_l, mid_r)
-        ic = extract(stroke, IC_G, mid_l, mid_r)
-        acc_v = extract(stroke, ACC_V_G, mid_l, mid_r)
-        fc = extract(stroke, FC_G, mid_l, mid_r)
+        pref = extract(stroke, PREFIX_G, mid)
+        ic = extract(stroke, IC_G, mid)
+        acc_v = extract(stroke, ACC_V_G, mid)
+        fc = extract(stroke, FC_G, mid)
 
-        tv = extract(stroke, TV_G, mid_l, mid_r)
-        v = extract(stroke, V_G, mid_l, mid_r)
-        sym = extract(stroke, SYM_G, mid_l, mid_r)
+        tv = extract(stroke, TV_G, mid)
+        v = extract(stroke, V_G, mid)
+        sym = extract(stroke, SYM_G, mid)
 
-        l_comb = extract(stroke, L_COMB_G, mid_l, mid_r)
-        r_comb = extract(stroke, R_COMB_G, mid_l, mid_r)
-        keys = extract(stroke, ALL_G, mid_l, mid_r)
+        l_comb = extract(stroke, L_COMB_G, mid)
+        r_comb = extract(stroke, R_COMB_G, mid)
+        keys = extract(stroke, ALL_G, mid)
 
         # grouped keys
         group_1 = (keys, ) if keys else None

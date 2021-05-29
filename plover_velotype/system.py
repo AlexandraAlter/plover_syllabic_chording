@@ -51,16 +51,22 @@ class VeloGroup:
     """A convenience class for storing groups of keys that are looked up together"""
     meta: str
     keys: str
-    lhs_only: bool = False
-    rhs_only: bool = False
+
+    def __init__(self, meta, keys):
+        self.meta = meta
+        self.keys = keys
+        keys_split = keys.split('-', 1)
+        self.left_keys = keys_split[0]
+        self.right_keys = keys_split[1] if len(keys_split) > 1 else ''
 
     def __add__(self, other):
         if not isinstance(other, VeloGroup):
             raise ValueError('Cannot add a VeloGroup to a non-Velogroup')
-        keys = self.keys + other.keys
-        rhs_only = self.rhs_only and other.rhs_only
-        lhs_only = self.lhs_only and other.lhs_only
-        return VeloGroup(self.meta + other.meta, keys, rhs_only, lhs_only)
+        if '-' in self.keys:
+            keys = self.keys + other.keys.replace('-', '')
+        else:
+            keys = self.keys + other.keys
+        return VeloGroup(self.meta + other.meta, keys)
 
 
 # used in the Velotype Extension
@@ -68,13 +74,13 @@ class VeloGroup:
 # meta-strokes are used to define and protect split strokes from being picked up
 # meta-strokes (+«<=>») must not be used to define regular strokes
 PREFIX_G = VeloGroup('+', '_')
-IC_G = VeloGroup('«', 'ZFSPTCKJRLNH', lhs_only=True)
+IC_G = VeloGroup('«', 'ZFSPTCKJRLNH')
 ACC_V_G = VeloGroup('<=>', "´IOE-'UAYOIE`")
-FC_G = VeloGroup('»', '-NLKJRPTCFSZ', rhs_only=True)
+FC_G = VeloGroup('»', '-NLKJRPTCFSZ')
 
-TV_G = VeloGroup('<', 'Y')
+TV_G = VeloGroup('<', '-Y')
 V_G = VeloGroup('=', 'IOE-UAOIE')
-SYM_G = VeloGroup('>', "´'`")
+SYM_G = VeloGroup('>', "´-'`")
 
 L_COMB_G = IC_G + ACC_V_G
 R_COMB_G = ACC_V_G + FC_G
