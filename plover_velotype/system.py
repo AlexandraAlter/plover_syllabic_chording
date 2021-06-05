@@ -12,38 +12,37 @@ from dataclasses import dataclass
 
 from plover.system import english_stenotype
 
-# _ ZFSPTCKJR LN H ´ IOE 'UAY OIE ` NL KJRPTCFSZ
-
+# yapf: disable
 KEYS = (
-    # shifts
-    '#',
-    # RHS heel
-    '_-',
     # LHS consonants fingers
     'Z-', 'F-', 'S-', 'P-', 'T-', 'C-', 'K-', 'J-', 'R-',
     # LHS consonants thumb
     'L-', 'N-',
     # LHS heel
     'H-',
-    # LHS thumb syms
-    '´-',
+    # Shared vowels thumbs
+    'Y-', '-Y',
     # LHS vowels fingers
     'I-', 'O-', 'E-',
-    # Finger syms
-    "'",
     # Shared vowels fingers
-    'U', 'A',
-    # Shared vowels thumb
-    'Y',
+    'U-', 'A-',
+    '-U', '-A',
     # RHS vowels fingers
     '-O', '-I', '-E',
-    # RHS thumb syms
-    '-`',
     # RHS consonants thumb
     '-N', '-L',
     # RHS consonants fingers
     '-K', '-J', '-R', '-P', '-T', '-C', '-F', '-S', '-Z',
+    # Finger syms
+    "'-", "-'",
+    # thumb syms
+    '´-', '-`',
+    # shifts
+    '-#',
+    # RHS heel
+    '_-',
 )
+# yapf: enable
 
 
 @dataclass
@@ -88,52 +87,48 @@ ALL_G = IC_G + ACC_V_G + FC_G
 # end of custom section
 
 # this is intentionally restricted to hyphen-less keys
-IMPLICIT_HYPHEN_KEYS = ("'", 'U', 'A', 'Y', '8', '5', '2', '0')
+IMPLICIT_HYPHEN_KEYS = ()
 
 # this is intentionally left empty
 SUFFIX_KEYS = ()
 
-NUMBER_KEY = '#'
+NUMBER_KEY = ''
 
 NUMBERS = {
-    'P-': '%-',
-    'K-': '&-',
-    'I-': '7-',
-    "'": '8',
-    '-O': '-9',
-    '-K': '-?',
-    '-P': '-!',
-
-    'F-': '£-',
-    'T-': 's-', # should be '/', but that is an invalid stroke
-    'J-': '*-',
-    'O-': '4-',
-    'U': '5',
-    '-I': '-6',
-    '-J': '-e', # should be '=', but that is used as a meta character
-    '-T': '-;',
-    '-F': "-'",
-
-    'Z-': '@-',
-    'S-': '$-',
-    'C-': '(-',
-    'R-': 'p-', # should be '+', but that is used as a meta character
-    'E-': '1-',
-    'A': '2',
-    '-E': '-3',
-    '-R': '-d', # should be '-', but that is an invalid stroke
-    '-C': '-)',
-    '-S': '-:',
-    '-Z': '-h', # should be '#', but that is already a stroke
-
-    'L-': '€-',
-    'N-': ',-',
-    'Y': '0',
-    '-N': '-.',
-    '-L': '-u', # should be '_', but that is used by NoSpace
-
-    '´-': '~-',
-    '-`': '-¨',
+    # 'P-': '%-',
+    # 'K-': '&-',
+    # 'I-': '7-',
+    # "'": '8',
+    # '-O': '-9',
+    # '-K': '-?',
+    # '-P': '-!',
+    # 'F-': '£-',
+    # 'T-': 's-',  # should be '/', but that is an invalid stroke
+    # 'J-': '*-',
+    # 'O-': '4-',
+    # 'U': '5',
+    # '-I': '-6',
+    # '-J': '-e',  # should be '=', but that is used as a meta character
+    # '-T': '-;',
+    # '-F': "-'",
+    # 'Z-': '@-',
+    # 'S-': '$-',
+    # 'C-': '(-',
+    # 'R-': 'p-',  # should be '+', but that is used as a meta character
+    # 'E-': '1-',
+    # 'A': '2',
+    # '-E': '-3',
+    # '-R': '-d',  # should be '-', but that is an invalid stroke
+    # '-C': '-)',
+    # '-S': '-:',
+    # '-Z': '-h',  # should be '#', but that is already a stroke
+    # 'L-': '€-',
+    # 'N-': ',-',
+    # 'Y': '0',
+    # '-N': '-.',
+    # '-L': '-u',  # should be '_', but that is used by NoSpace
+    # '´-': '~-',
+    # '-`': '-¨',
 }
 
 UNDO_STROKE_STENO = 'SN-NS'
@@ -148,64 +143,59 @@ KEYMAPS = {
         'P-': '3',
         'K-': '4',
         'I-': '5',
-        "'":  '6',
+        "'": '6',
         '-O': '7',
         '-K': '8',
         '-P': '9',
-
         'F-': 'w',
         'T-': 'e',
         'J-': 'r',
         'O-': 't',
-        'U':  'y',
+        'U': 'y',
         '-I': 'u',
         '-J': 'i',
         '-T': 'o',
         '-F': 'p',
-
         'Z-': ('q', 'a'),
         'S-': 's',
         'C-': 'd',
         'R-': 'f',
         'E-': 'g',
-        'A':  'h',
+        'A': 'h',
         '-E': 'j',
         '-R': 'k',
         '-C': 'l',
         '-S': ';',
         '-Z': ('[', "'"),
-
         'L-': 'v',
         'N-': 'b',
-        'Y':  'n',
+        'Y': 'n',
         '-N': 'm',
         '-L': ',',
-
         '´-': 'c',
-        '#':  ('x', '/'),
+        '#': ('x', '/'),
         '-`': '.',
-
         '_-': 'space',
         'H-': 'z',
-
         'arpeggiate': 'Return',
         'no-op': ('`', '1', '2', '0', '-', '=', ']', '\\'),
     },
-
     'Gemini PR': {
         'P-': '#3',
         'K-': '#4',
         'I-': '#5',
-        "'":  '#6',
-        '-O': '#7',
-        '-K': '#8',
-        '-P': '#9',
+        "'-": '#6',
+        "-'": '#7',
+        '-O': '#8',
+        '-K': '#9',
+        '-P': '#A',
 
         'F-': 'S1-',
         'T-': 'T-',
         'J-': 'P-',
         'O-': 'H-',
-        'U':  '*1',
+        'U-': '*1',
+        '-U': '*3',
         '-I': '-F',
         '-J': '-P',
         '-T': '-L',
@@ -216,7 +206,8 @@ KEYMAPS = {
         'C-': 'K-',
         'R-': 'W-',
         'E-': 'R-',
-        'A':  '*2',
+        'A-': '*2',
+        '-A': '*4',
         '-E': '-R',
         '-R': '-B',
         '-C': '-G',
@@ -225,18 +216,18 @@ KEYMAPS = {
 
         'L-': 'A-',
         'N-': 'O-',
-        'Y':  'Fn',
+        'Y-': '#2',
+        '-Y': 'Fn',
         '-N': '-E',
         '-L': '-U',
 
-        '´-': '*3',
-        '#':  'res1',
-        '-`': '*4',
-
+        '´-': '#B',
+        '-#': 'res1',
+        '-`': '#C',
         'H-': '#1',
         '_-': '-D',
 
-        'no-op': ('#2', '#A', '#B', '#C'),
+        'no-op': (),
     },
 }
 
@@ -248,9 +239,6 @@ KEYMAPS['Keyboard Plus'] = KEYMAPS['Keyboard']
 
 DICTIONARIES_ROOT = 'asset:plover_velotype:assets'
 DEFAULT_DICTIONARIES = (
-    'velo_user.json',
-    'velo_commands.json',
-    'velo_english_basic.json',
-    'velo_base.json',
+    'velo_user.velo',
+    'velo_english_basic.velo',
 )
-
