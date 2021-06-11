@@ -12,7 +12,6 @@ from dataclasses import dataclass
 
 from plover.system import english_stenotype
 
-# yapf: disable
 KEYS = (
     # LHS consonants fingers
     'Z-', 'F-', 'S-', 'P-', 'T-', 'C-', 'K-', 'J-', 'R-',
@@ -40,9 +39,8 @@ KEYS = (
     # shifts
     '-#',
     # RHS heel
-    '_-',
-)
-# yapf: enable
+    '-_',
+) # yapf: disable
 
 
 @dataclass
@@ -175,7 +173,7 @@ KEYMAPS = {
         '´-': 'c',
         '#': ('x', '/'),
         '-`': '.',
-        '_-': 'space',
+        '-_': 'space',
         'H-': 'z',
         'arpeggiate': 'Return',
         'no-op': ('`', '1', '2', '0', '-', '=', ']', '\\'),
@@ -189,7 +187,6 @@ KEYMAPS = {
         '-O': '#8',
         '-K': '#9',
         '-P': '#A',
-
         'F-': 'S1-',
         'T-': 'T-',
         'J-': 'P-',
@@ -200,7 +197,6 @@ KEYMAPS = {
         '-J': '-P',
         '-T': '-L',
         '-F': '-T',
-
         'Z-': 'res2',
         'S-': 'S2-',
         'C-': 'K-',
@@ -213,20 +209,17 @@ KEYMAPS = {
         '-C': '-G',
         '-S': '-S',
         '-Z': '-Z',
-
         'L-': 'A-',
         'N-': 'O-',
         'Y-': '#2',
         '-Y': 'Fn',
         '-N': '-E',
         '-L': '-U',
-
         '´-': '#B',
         '-#': 'res1',
         '-`': '#C',
         'H-': '#1',
-        '_-': '-D',
-
+        '-_': '-D',
         'no-op': (),
     },
 }
