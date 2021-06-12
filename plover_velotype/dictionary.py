@@ -78,8 +78,7 @@ class VeloDictionaryCollection:
         if len(strokes) > 1:
             return None
 
-        stroke = strokes[0]
-        stroke_bits = keys_to_bits(stroke)
+        stroke = keys_to_bits(strokes[0])
 
         matches = []
 
@@ -91,10 +90,10 @@ class VeloDictionaryCollection:
                     print('Skipping', s)
                     continue
 
-                matched, new_stroke_bits, branch = s.matches(stroke_bits)
+                matched, new_stroke, branch = s.matches(stroke)
 
                 if matched:
-                    print(f'Matched {s}, new_stroke={bits_to_keys(new_stroke_bits)}')
+                    print(f'Matched {s}, new_stroke={bits_to_keys(new_stroke)}')
                 else:
                     print(f'Failed {s}')
 
@@ -104,19 +103,29 @@ class VeloDictionaryCollection:
                 if branch is not None:
                     skip_counter = branch.jump
                     if branch.consume:
-                        stroke_bits = new_stroke_bits
+                        stroke = new_stroke
+                elif s.output:
+                    # this is a bit of a shortcut to stop output-less,
+                    # branch-less strokes from eating input.
+                    stroke = new_stroke
                 else:
-                    stroke_bits = new_stroke_bits
+                    pass
 
         print(matches)
         print(stroke)
 
-        if stroke is not None:
+        if stroke and not matches:
+            # we did not clear any bit of the stroke
             return None
 
-        matches.sort(key=lambda m: m.order)
+        matches.sort(key=lambda m: m.output.order)
+        string = ''.join(m.output.string for m in matches)
 
-        return ''.join(m.output for m in matches)
+        if stroke and matches:
+            # we found some matches, but did not clear every bit of the stroke
+            return string + bits_to_keys(stroke)
+        else:
+            return string
 
     def _lookup(self, strokes, dicts=None, filters=()):
         def lookup_fn(v):
