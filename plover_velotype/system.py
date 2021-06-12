@@ -68,16 +68,16 @@ KEYMAPS = {
         'Z-': ('q', 'a'),  'S-': 's',  'C-': 'd',  'R-': 'f',  'E-': 'g',  'A-': 'h',
                                                    'L-': 'v',  'N-': 'b',  'Y-': 'n',
 
-        "-'": '6',  '-O': '7',  '-K': '8',  '-P': '9',
-        '-U': 'y',  '-I': 'u',  '-J': 'i',  '-T': 'o',  '-F': 'p',
-        '-A': 'h',  '-E': 'j',  '-R': 'k',  '-C': 'l',  '-S': ';',  '-Z': ('[', "'"),
-        '-Y': 'n',  '-N': 'm',  '-L': ',',
+        "-'": '7',  '-O': '8',  '-K': '9',  '-P': '0',
+        '-U': 'u',  '-I': 'i',  '-J': 'o',  '-T': 'p',  '-F': '\\',
+        '-A': 'j',  '-E': 'k',  '-R': 'l',  '-C': ';',  '-S': '[',  '-Z': (']', "'"),
+        '-Y': 'm',  '-N': ',',  '-L': '.',
 
-        '´-': 'c',  '-#': ('x', '/'),  '-`': '.',
-        'H-': 'z',  '-_': 'space',
+        '´-': 'z',  '-#': 'x',  '-`': '/',
+        'H-': 'c',  '-_': 'space',
 
         'arpeggiate': 'Return',
-        'no-op': ('`', '1', '2', '0', '-', '=', ']', '\\'),
+        'no-op': ('`', '1', '2', '-', '='),
     },
 
     'Gemini PR': {
@@ -101,7 +101,7 @@ KEYMAPS = {
 # Normally this kind of duplication would be handled using KEYMAP_MACHINE_TYPE,
 #   but due to the way the keymap fallback is done, these layouts would lose their
 #   extra keys, so this exists as a patch for that issue.
-KEYMAPS_EXTRAS = {
+KEYMAPS_FN = {
     '-¹': 'F1',
     '-²': 'F2',
     '-³': 'F3',
@@ -114,6 +114,9 @@ KEYMAPS_EXTRAS = {
     '-ᵃ': 'F10',
     '-ᵇ': 'F11',
     '-ᶜ': 'F12',
+}
+
+KEYMAPS_GEMINI_PR_PLUS = {
     'H-': 'F14',
     '-_': 'F15',
     '-#': 'F16',
@@ -128,26 +131,56 @@ KEYMAPS_EXTRAS = {
     'no-op': ('F13', ),
 }
 
-KEYMAPS['Gemini PR Footpedal'] = KEYMAPS['Gemini PR'].copy()
+KEYMAPS_KEYBOARD_PLUS = {
+    'H-': 'F14',
+    '-_': 'F15',
+    '-#': 'F16',
+    '-✦': 'F17',
+    '-◆': 'F18',
+    '-⎈': 'F19',
+    '-❖': 'F20',
+    '-↓': 'F21',
+    '-↑': 'F22',
+    '-←': 'F23',
+    '-→': 'F24',
+    'no-op': ('F13', ),
+}
+
+KEYMAPS['Gemini PR Plus'] = KEYMAPS['Gemini PR'].copy()
 KEYMAPS['Keyboard Plus'] = KEYMAPS['Keyboard'].copy()
 
-for m in ('Gemini PR Footpedal', 'Keyboard Plus'):
-  for k, v in KEYMAPS_EXTRAS.items():
+
+def merge_keys(orig, new):
+  if isinstance(new, str):
+    new = (new, )
+  elif not isinstance(new, tuple):
+    raise ValueError('new key value was not str or tuple')
+
+  if orig is None:
+    return new
+  elif isinstance(orig, str):
+    return (orig, ) + new
+  elif isinstance(orig, tuple):
+    return orig + new
+  else:
+    raise ValueError('orig key value was not None, str, or tuple')
+
+
+for m in ('Gemini PR Plus', 'Keyboard Plus', 'Keyboard'):
+  for k, new in KEYMAPS_FN.items():
     orig = KEYMAPS[m].get(k)
+    KEYMAPS[m][k] = merge_keys(orig, new)
 
-    if isinstance(v, str):
-      v = (v, )
-    elif not isinstance(v, tuple):
-      raise ValueError('KEYMAP_EXTRAS value was not str or tuple')
+for k, new in KEYMAPS_GEMINI_PR_PLUS.items():
+  m = 'Gemini PR Plus'
+  orig = KEYMAPS[m].get(k)
+  KEYMAPS[m][k] = merge_keys(orig, new)
 
-    if orig is None:
-      KEYMAPS[m][k] = v
-    elif isinstance(orig, str):
-      KEYMAPS[m][k] = (orig, ) + v
-    elif isinstance(orig, tuple):
-      KEYMAPS[m][k] = orig + v
-    else:
-      raise ValueError('KEYMAPS value was not None, str, or tuple')
+for k, new in KEYMAPS_KEYBOARD_PLUS.items():
+  m = 'Keyboard Plus'
+  orig = KEYMAPS[m].get(k)
+  KEYMAPS[m][k] = merge_keys(orig, new)
+
 
 DICTIONARIES_ROOT = 'asset:plover_velotype:assets'
 DEFAULT_DICTIONARIES = (
