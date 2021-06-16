@@ -1,7 +1,7 @@
 from plover.formatting import Case, SPACE
 
 
-def syll_caps(ctx, arg):
+def syllabic_caps(ctx, arg):
     """
     cmdline should be:
         caps: UPPERCASE

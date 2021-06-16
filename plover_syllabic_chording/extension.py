@@ -1,6 +1,6 @@
 from plover import log, system
 
-from plover_syllabic_chording.system import NAME as SYL_NAME
+from plover_syllabic_chording import system as syllabic_sys
 from plover_syllabic_chording.dictionary import SyllabicDictCollection
 
 
@@ -9,7 +9,7 @@ class SyllabicExt:
         self.engine = engine
 
     def proxy_dicts(self, dictionaries):
-        if system.NAME != SYL_NAME:
+        if system is syllabic_sys:
             log.info('syllabic chording extension: ignoring non-syllabic system')
             return
 
@@ -21,7 +21,7 @@ class SyllabicExt:
             self.engine._translator.set_dictionary(new_dicts)
 
     def unproxy_dicts(self):
-        if system.NAME != SYL_NAME:
+        if system is syllabic_sys:
             log.info('syllabic chording extension: ignoring non-syllabic system')
             return
 
