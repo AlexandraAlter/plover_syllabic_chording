@@ -101,7 +101,7 @@ class VeloDictionaryCollection:
                     matches.append(s)
 
                 if branch is not None:
-                    skip_counter = branch.jump
+                    skip_counter = branch.jump or 0
                     if branch.consume:
                         stroke = new_stroke
                 elif s.output:
@@ -110,9 +110,6 @@ class VeloDictionaryCollection:
                     stroke = new_stroke
                 else:
                     pass
-
-        print(matches)
-        print(stroke)
 
         if stroke and not matches:
             # we did not clear any bit of the stroke

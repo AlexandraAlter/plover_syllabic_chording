@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 from bitstring import BitArray
 from enum import Enum
 
@@ -8,11 +8,6 @@ from plover import log
 from plover_velotype.system import KEYS
 
 ALL_KEYS_MASK = '*'
-UNUSABLE_KEYS = '↓→←↑⎈✦◆❖¹²³⁴⁵⁶⁷⁸⁹ᵃᵇᶜ'
-
-
-class UnusableStroke(Exception):
-    pass
 
 
 def split_stroke(stroke: str) -> tuple[str]:
@@ -47,9 +42,6 @@ def is_mid_key(key: str) -> bool:
 def keys_to_bits(keys: Optional[str]) -> Optional[BitArray]:
   if keys is None:
     return None
-
-  if any(k in UNUSABLE_KEYS for k in keys):
-    raise UnusableStroke()
 
   if keys == ALL_KEYS_MASK:
     return BitArray(int=-1, length=len(KEYS))
@@ -102,17 +94,19 @@ def bits_to_keys(bits: Optional[BitArray]) -> Optional[str]:
 
 @dataclass
 class VeloBranch:
-  jump: int
-  consume: bool
+  jump: Optional[int]
+  consume: Optional[bool]
 
   def __post_init__(self):
-    assert isinstance(self.jump, int)
-    assert isinstance(self.consume, bool)
-    assert self.jump > 0
+    assert isinstance(self.jump, (type(None), int))
+    assert isinstance(self.consume, (type(None), bool))
+    if self.jump is not None:
+      assert self.jump > 0
 
   def __format__(self, spec):
-    consume = ' consumes' if self.consume else ''
-    args = f'jump={self.jump} {consume}'
+    consume = 'consumes' if self.consume else None
+    jump = f'jump={self.jump}' if self.jump else None
+    args = ' '.join(a for a in (consume, jump) if a is not None)
     if spec == 'short':
       return args
     else:
@@ -125,22 +119,54 @@ class VeloBranch:
   def from_json(cls, obj):
     if obj is None:
       return None
-    return VeloBranch(jump=obj['jump'], consume=obj['consume'])
+    return VeloBranch(jump=obj.get('jump'), consume=obj.get('consume'))
+
+
+VALID_MODS = ['shift', 'ctrl', 'alt', 'altgr', 'super']
+MODS_TO_PLOVER = {
+    'shift': 'Shift',
+    'ctrl': 'Control',
+    'alt': 'Alt',
+    'altgr': 'Alt_R',
+    'super': 'Super',
+}
 
 
 @dataclass
 class VeloString:
   order: int
-  string: str
+  mods: Optional[list[str]]
+  string: Optional[str]
+
+  @property
+  def string_with_mods(self):
+    if self.mods is None:
+      return self.string
+
+    if self.string is None:
+      return None
+
+    start = '#' + ''.join(MODS_TO_PLOVER[m] + '(' for m in self.mods)
+    end = ')' * len(self.mods)
+
+    if '#' in self.string:
+      return self.string.replace('#', start, 1) + end
+    else:
+      return '{' + start + self.string + end + '}'
 
   def __post_init__(self):
     assert isinstance(self.order, int), 'output.order was not int'
-    assert isinstance(self.string, str), 'output.string was not str'
+    assert isinstance(self.mods, (type(None), list)), 'output.mods was not None/list'
+    assert isinstance(self.string, (type(None), str)), 'output.string was not str'
     assert self.order >= 0, 'order must not be negative'
+    if self.mods:
+      for m in self.mods:
+        assert m in VALID_MODS, 'output.mods invalid'
 
   def __format__(self, spec):
-    string = repr(self.string)
-    args = f'order={self.order} string={string}'
+    mods = f' mods={self.mods}' if self.mods else ''
+    string = f' string={repr(self.string)}' if self.string else ''
+    args = f'order={self.order}{mods}{string}'
     if spec == 'short':
       return args
     else:
@@ -153,7 +179,8 @@ class VeloString:
   def from_json(cls, obj):
     if obj is None:
       return None
-    return VeloString(order=obj['order'], string=obj['string'])
+
+    return VeloString(order=obj['order'], mods=obj.get('mods'), string=obj.get('string'))
 
 
 @dataclass
@@ -166,7 +193,7 @@ class VeloStroke:
   kind: Kind
   keys: Optional[BitArray]
   mask: Optional[BitArray]
-  output: Optional[VeloString]
+  output: Union[None, VeloString, list[VeloString]]
   if_true: Optional[VeloBranch]
   if_false: Optional[VeloBranch]
 
@@ -175,19 +202,35 @@ class VeloStroke:
     assert isinstance(self.kind, VeloStroke.Kind), 'kind was not Kind'
     assert isinstance(self.keys, (type(None), BitArray)), 'kind was not None/BitArray'
     assert isinstance(self.mask, (type(None), BitArray)), 'mask was not None/BitArray'
-    assert isinstance(self.output, (type(None), VeloString)), 'output was not None/VeloString'
+    t_output = (type(None), VeloString, list[VeloString])
+    assert isinstance(self.output, t_output), 'output was not None/VeloString/list'
     assert isinstance(self.if_true, (type(None), VeloBranch)), 'if_true was not None/VeloBranch'
     assert isinstance(self.if_false, (type(None), VeloBranch)), 'if_false was not None/VeloBranch'
     assert not self.keys or len(self.keys) == len(KEYS), 'keys was the wrong length'
     assert not self.mask or len(self.mask) == len(KEYS), 'mask was the wrong length'
 
   def __format__(self, spec):
+    if self.kind == VeloStroke.Kind.NORMAL:
+      kind = ''
+    elif self.kind == VeloStroke.Kind.WILDCARD:
+      kind = ' kind=wild'
+    else:
+      raise RuntimeError('unknown VeloStroke.Kind')
+
     keys = ' keys=' + bits_to_keys(self.keys) if self.keys is not None else ''
-    mask = ' mask=' + bits_to_keys(self.mask) if self.mask is not None else ''
+
+    if self.mask is None:
+      mask = ''
+    elif not (~self.mask):  # all bits are set
+      mask = ' mask=*'
+    else:
+      mask = ' mask=' + bits_to_keys(self.mask)
+
     string = f' output=({self.output:short})' if self.output else ''
-    if_true = f' true=({self.if_true:short})' if self.if_true else ''
-    if_false = f' false=({self.if_false:short})' if self.if_false else ''
-    args = f'n={self.n}{keys}{mask}{string}{if_true}{if_false}'
+    if_true = f' if_true=({self.if_true:short})' if self.if_true else ''
+    if_false = f' if_false=({self.if_false:short})' if self.if_false else ''
+    args = f'n={self.n}{kind}{keys}{mask}{string}{if_true}{if_false}'
+
     if spec == 'short':
       return args
     else:
@@ -224,18 +267,16 @@ class VeloStroke:
   def from_json(cls, obj, n=0):
     if obj is None:
       return None
-    try:
-      return VeloStroke(
-          n=n,
-          kind=cls.Kind(obj.get('kind', 'normal')),
-          keys=keys_to_bits(obj.get('keys')),
-          mask=keys_to_bits(obj.get('mask')),
-          output=VeloString.from_json(obj.get('output')),
-          if_true=VeloBranch.from_json(obj.get('if_true')),
-          if_false=VeloBranch.from_json(obj.get('if_false')),
-      )
-    except UnusableStroke:
-      return None
+
+    return VeloStroke(
+        n=n,
+        kind=cls.Kind(obj.get('kind', 'normal')),
+        keys=keys_to_bits(obj.get('keys')),
+        mask=keys_to_bits(obj.get('mask')),
+        output=VeloString.from_json(obj.get('output')),
+        if_true=VeloBranch.from_json(obj.get('if_true')),
+        if_false=VeloBranch.from_json(obj.get('if_false')),
+    )
 
 
 @dataclass

@@ -1,7 +1,7 @@
 from plover.formatting import Case, SPACE
 
 
-def toggle_caps(ctx, arg):
+def velo_caps(ctx, arg):
     """
     cmdline should be:
         caps: UPPERCASE
@@ -15,7 +15,7 @@ def toggle_caps(ctx, arg):
         reset: Reset to normal case, space resets to ' '
     """
     if arg != '':
-        raise ValueError('toggle_caps does not take arguments')
+        raise ValueError('velo_caps does not take arguments')
     action = ctx.copy_last_action()
     if action.case == Case.UPPER:
         action.case = None
