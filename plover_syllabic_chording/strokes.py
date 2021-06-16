@@ -5,7 +5,7 @@ from enum import Enum
 
 from plover import log
 
-from plover_velotype.system import KEYS
+from plover_syllabic_chording.system import KEYS
 
 ALL_KEYS_MASK = '*'
 
@@ -93,7 +93,7 @@ def bits_to_keys(bits: Optional[BitArray]) -> Optional[str]:
 
 
 @dataclass
-class VeloBranch:
+class Branch:
   jump: Optional[int]
   consume: Optional[bool]
 
@@ -110,7 +110,7 @@ class VeloBranch:
     if spec == 'short':
       return args
     else:
-      return 'VeloBranch(' + args + ')'
+      return 'Branch(' + args + ')'
 
   def __repr__(self):
     return self.__format__(None)
@@ -119,7 +119,7 @@ class VeloBranch:
   def from_json(cls, obj):
     if obj is None:
       return None
-    return VeloBranch(jump=obj.get('jump'), consume=obj.get('consume'))
+    return Branch(jump=obj.get('jump'), consume=obj.get('consume'))
 
 
 VALID_MODS = ['shift', 'ctrl', 'alt', 'altgr', 'super']
@@ -133,7 +133,7 @@ MODS_TO_PLOVER = {
 
 
 @dataclass
-class VeloString:
+class String:
   order: int
   mods: Optional[list[str]]
   string: Optional[str]
@@ -170,7 +170,7 @@ class VeloString:
     if spec == 'short':
       return args
     else:
-      return 'VeloString(' + args + ')'
+      return 'String(' + args + ')'
 
   def __repr__(self):
     return self.__format__(None)
@@ -180,11 +180,11 @@ class VeloString:
     if obj is None:
       return None
 
-    return VeloString(order=obj['order'], mods=obj.get('mods'), string=obj.get('string'))
+    return String(order=obj['order'], mods=obj.get('mods'), string=obj.get('string'))
 
 
 @dataclass
-class VeloStroke:
+class Stroke:
   class Kind(Enum):
     NORMAL = 'normal'
     WILDCARD = 'wildcard'
@@ -193,29 +193,29 @@ class VeloStroke:
   kind: Kind
   keys: Optional[BitArray]
   mask: Optional[BitArray]
-  output: Union[None, VeloString, list[VeloString]]
-  if_true: Optional[VeloBranch]
-  if_false: Optional[VeloBranch]
+  output: Union[None, String, list[String]]
+  if_true: Optional[Branch]
+  if_false: Optional[Branch]
 
   def __post_init__(self):
     assert isinstance(self.n, int), 'n was not int'
-    assert isinstance(self.kind, VeloStroke.Kind), 'kind was not Kind'
+    assert isinstance(self.kind, Stroke.Kind), 'kind was not Kind'
     assert isinstance(self.keys, (type(None), BitArray)), 'kind was not None/BitArray'
     assert isinstance(self.mask, (type(None), BitArray)), 'mask was not None/BitArray'
-    t_output = (type(None), VeloString, list[VeloString])
-    assert isinstance(self.output, t_output), 'output was not None/VeloString/list'
-    assert isinstance(self.if_true, (type(None), VeloBranch)), 'if_true was not None/VeloBranch'
-    assert isinstance(self.if_false, (type(None), VeloBranch)), 'if_false was not None/VeloBranch'
+    t_output = (type(None), String, list[String])
+    assert isinstance(self.output, t_output), 'output was not None/String/list'
+    assert isinstance(self.if_true, (type(None), Branch)), 'if_true was not None/Branch'
+    assert isinstance(self.if_false, (type(None), Branch)), 'if_false was not None/Branch'
     assert not self.keys or len(self.keys) == len(KEYS), 'keys was the wrong length'
     assert not self.mask or len(self.mask) == len(KEYS), 'mask was the wrong length'
 
   def __format__(self, spec):
-    if self.kind == VeloStroke.Kind.NORMAL:
+    if self.kind == Stroke.Kind.NORMAL:
       kind = ''
-    elif self.kind == VeloStroke.Kind.WILDCARD:
+    elif self.kind == Stroke.Kind.WILDCARD:
       kind = ' kind=wild'
     else:
-      raise RuntimeError('unknown VeloStroke.Kind')
+      raise RuntimeError('unknown Stroke.Kind')
 
     keys = ' keys=' + bits_to_keys(self.keys) if self.keys is not None else ''
 
@@ -234,7 +234,7 @@ class VeloStroke:
     if spec == 'short':
       return args
     else:
-      return 'VeloStroke(' + args + ')'
+      return 'Stroke(' + args + ')'
 
   def __repr__(self):
     return self.__format__(None)
@@ -249,15 +249,15 @@ class VeloStroke:
     mask = self.mask if self.mask is not None else self.keys
     masked_keys = keys & mask
 
-    if self.kind == VeloStroke.Kind.NORMAL:
+    if self.kind == Stroke.Kind.NORMAL:
       match = bool(self.keys == masked_keys)
       new_keys = keys & (~mask) if match else keys
-    elif self.kind == VeloStroke.Kind.WILDCARD:
+    elif self.kind == Stroke.Kind.WILDCARD:
       matched_keys = self.keys & masked_keys
       match = bool(matched_keys)
       new_keys = keys & (~matched_keys) if match else keys
     else:
-      raise RuntimeError('unknown VeloStroke.Kind')
+      raise RuntimeError('unknown Stroke.Kind')
 
     branch = self.if_true if match else self.if_false
 
@@ -268,39 +268,12 @@ class VeloStroke:
     if obj is None:
       return None
 
-    return VeloStroke(
+    return Stroke(
         n=n,
         kind=cls.Kind(obj.get('kind', 'normal')),
         keys=keys_to_bits(obj.get('keys')),
         mask=keys_to_bits(obj.get('mask')),
-        output=VeloString.from_json(obj.get('output')),
-        if_true=VeloBranch.from_json(obj.get('if_true')),
-        if_false=VeloBranch.from_json(obj.get('if_false')),
+        output=String.from_json(obj.get('output')),
+        if_true=Branch.from_json(obj.get('if_true')),
+        if_false=Branch.from_json(obj.get('if_false')),
     )
-
-
-@dataclass
-class VeloLang:
-  strokes: list[VeloStroke]
-
-  def __post_init__(self):
-    assert isinstance(self.strokes, list), 'strokes was not list'
-
-  def __len__(self):
-    return len(self.strokes)
-
-  def __getitem__(self, index):
-    return self.strokes[index]
-
-  def __iter__(self):
-    return self.strokes.__iter__()
-
-  def as_key_to_stroke(self):
-    for s in self.strokes:
-      yield ((bits_to_keys(s.keys), ), s.output.string if s.output else '')
-
-  @classmethod
-  def from_json(cls, obj):
-    strokes = (VeloStroke.from_json(s, n=i) for i, s in enumerate(obj))
-    filtered = list(s for s in strokes if s is not None)
-    return VeloLang(filtered)
