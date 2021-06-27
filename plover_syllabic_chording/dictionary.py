@@ -27,6 +27,7 @@ class SyllabicDict(StenoDictionary):
     super().__init__()
     del self._dict
     self._strokes = None
+    self._longest_key = 1
 
   def _load(self, filename):
     with open(filename, 'rb') as fp:
@@ -72,11 +73,13 @@ class SyllabicDictCollection:
   def __getattr__(self, attr):
     return getattr(self._proxy, attr)
 
-  @property
-  def syll_dicts(self):
-    return list(d for d in self.dicts if isinstance(d, SyllabicDict))
-
   def _generic_lookup(self, lookup_fn, strokes, dicts, filters):
+    if dicts is None:
+      dicts = self.dicts
+    stroke_len = len(strokes)
+    if stroke_len > self.longest_key:
+      return None
+
     if strokes[-1] == UNDO_STROKE_STENO:
       # ignore the undo stroke
       return None
@@ -90,7 +93,14 @@ class SyllabicDictCollection:
 
     matches = []
 
-    for d in self.syll_dicts:
+    for d in dicts:
+      if not d.enabled:
+        continue
+      if stroke_len > d.longest_key:
+        continue
+      if not isinstance(d, SyllabicDict):
+        continue
+
       skip_counter = 0
       for s in d:
         if skip_counter > 0:
@@ -104,6 +114,8 @@ class SyllabicDictCollection:
           print(f'Matched {s}, new_stroke={bits_to_keys(new_stroke)}')
         else:
           print(f'Failed {s}')
+
+        # TODO implement filters here?
 
         if matched and s.output:
           matches.append(s)
@@ -124,13 +136,13 @@ class SyllabicDictCollection:
       return None
 
     matches.sort(key=lambda m: m.output.order)
-    string = ''.join(m.output.string for m in matches)
+    value = ''.join(m.output.string for m in matches)
 
     if stroke and matches:
       # we found some matches, but did not clear every bit of the stroke
-      return string + bits_to_keys(stroke)
-    else:
-      return string
+      value += bits_to_keys(stroke)
+
+    return value
 
   def _lookup(self, strokes, dicts=None, filters=()):
     def lookup_fn(v):

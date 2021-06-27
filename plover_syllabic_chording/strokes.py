@@ -180,18 +180,17 @@ class String:
     if obj is None:
       return None
 
+    if isinstance(obj, list):
+      return list(String.from_json(s) for s in obj)
+
     return String(order=obj['order'], mods=obj.get('mods'), string=obj.get('string'))
 
 
 @dataclass
 class Stroke:
-  class Kind(Enum):
-    NORMAL = 'normal'
-    WILDCARD = 'wildcard'
-
   n: int
-  kind: Kind
   keys: Optional[BitArray]
+  wildcard: Optional[BitArray]
   mask: Optional[BitArray]
   output: Union[None, String, list[String]]
   if_true: Optional[Branch]
@@ -199,10 +198,11 @@ class Stroke:
 
   def __post_init__(self):
     assert isinstance(self.n, int), 'n was not int'
-    assert isinstance(self.kind, Stroke.Kind), 'kind was not Kind'
     assert isinstance(self.keys, (type(None), BitArray)), 'kind was not None/BitArray'
+    assert isinstance(self.wildcard, (type(None), BitArray)), 'wildcard was not None/BitArray'
+    assert self.keys is not None or self.wildcard is not None, 'needs keys or wildcard'
     assert isinstance(self.mask, (type(None), BitArray)), 'mask was not None/BitArray'
-    t_output = (type(None), String, list[String])
+    t_output = (type(None), String, list)
     assert isinstance(self.output, t_output), 'output was not None/String/list'
     assert isinstance(self.if_true, (type(None), Branch)), 'if_true was not None/Branch'
     assert isinstance(self.if_false, (type(None), Branch)), 'if_false was not None/Branch'
@@ -210,31 +210,31 @@ class Stroke:
     assert not self.mask or len(self.mask) == len(KEYS), 'mask was the wrong length'
 
   def __format__(self, spec):
-    if self.kind == Stroke.Kind.NORMAL:
-      kind = ''
-    elif self.kind == Stroke.Kind.WILDCARD:
-      kind = ' kind=wild'
-    else:
-      raise RuntimeError('unknown Stroke.Kind')
-
     keys = ' keys=' + bits_to_keys(self.keys) if self.keys is not None else ''
+    wild = ' wild=' + bits_to_keys(self.wildcard) if self.wildcard is not None else ''
 
     if self.mask is None:
       mask = ''
-    elif not (~self.mask):  # all bits are set
-      mask = ' mask=*'
     else:
-      mask = ' mask=' + bits_to_keys(self.mask)
+      # output a star if all bits are set
+      mask = ' mask=' + (bits_to_keys(self.mask) if (~self.mask) else '*')
 
-    string = f' output=({self.output:short})' if self.output else ''
+    if isinstance(self.output, list):
+      outputs = ', '.join(format(o, 'short') for o in self.output)
+      string = f' output=[{outputs}]'
+    else:
+      string = f' output=({self.output:short})' if self.output else ''
+
     if_true = f' if_true=({self.if_true:short})' if self.if_true else ''
     if_false = f' if_false=({self.if_false:short})' if self.if_false else ''
-    args = f'n={self.n}{kind}{keys}{mask}{string}{if_true}{if_false}'
+    args = f'n={self.n}{keys}{wild}{mask}{string}{if_true}{if_false}'
 
-    if spec == 'short':
+    if spec is None or spec == '':
+      return 'Stroke(' + args + ')'
+    elif spec == 'short':
       return args
     else:
-      return 'Stroke(' + args + ')'
+      raise TypeError('unsupported format string')
 
   def __repr__(self):
     return self.__format__(None)
@@ -243,21 +243,18 @@ class Stroke:
     if keys is None:
       return (False, keys, self.if_false)
 
-    if self.keys is None:
-      return (True, keys, self.if_true)
-
-    mask = self.mask if self.mask is not None else self.keys
+    mask = self.mask or self.keys or self.wildcard
     masked_keys = keys & mask
 
-    if self.kind == Stroke.Kind.NORMAL:
+    if self.keys is not None:
       match = bool(self.keys == masked_keys)
       new_keys = keys & (~mask) if match else keys
-    elif self.kind == Stroke.Kind.WILDCARD:
-      matched_keys = self.keys & masked_keys
+    elif self.wildcard is not None:
+      matched_keys = self.wildcard & masked_keys
       match = bool(matched_keys)
       new_keys = keys & (~matched_keys) if match else keys
     else:
-      raise RuntimeError('unknown Stroke.Kind')
+      raise RuntimeError(f'unsure what to do with stroke {self}')
 
     branch = self.if_true if match else self.if_false
 
@@ -270,8 +267,8 @@ class Stroke:
 
     return Stroke(
         n=n,
-        kind=cls.Kind(obj.get('kind', 'normal')),
         keys=keys_to_bits(obj.get('keys')),
+        wildcard=keys_to_bits(obj.get('wildcard')),
         mask=keys_to_bits(obj.get('mask')),
         output=String.from_json(obj.get('output')),
         if_true=Branch.from_json(obj.get('if_true')),

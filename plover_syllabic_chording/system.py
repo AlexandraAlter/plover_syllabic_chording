@@ -72,23 +72,30 @@ KEYMAPS = {
                                     'P-': '#3',   'K-': '#4',   'I-': '#5',   "'-": '#6',
                       'F-': 'S1-',  'T-': 'T-',   'J-': 'P-',   'O-': 'H-',   'U-': '*1',
         'Z-': 'Fn',   'S-': 'S2-',  'C-': 'K-',   'R-': 'W-',   'E-': 'R-',   'A-': '*2',
-                                                  'L-': 'A-',   'N-': 'O-',   'Y-': 'res1',
+                                                  'L-': 'A-',   'N-': 'O-',   'Y-': '#2',
 
         "-'": '#7',   '-O': '#8',   '-K': '#9',   '-P': '#A',
         '-U': '*3',   '-I': '-F',   '-J': '-P',   '-T': '-L',   '-F': '-T',
         '-A': '*4',   '-E': '-R',   '-R': '-B',   '-C': '-G',   '-S': '-S',   '-Z': '-Z',
-        '-Y': 'res2', '-N': '-E',   '-L': '-U',
+        '-Y': '#B',   '-N': '-E',   '-L': '-U',
 
-        '´-': '#1',   '-#': '#B', '-`': '#C',
-        'H-': '#2',   '-_': '-D',
+        '-#': ('#1', '#C'),
+        '´-': 'pwr', '-`': '-D',
+        'H-': 'res1', '-_': 'res2',
 
-        'no-op': ('pwr'),
+        'no-op': (),
     },
 } # yapf: disable
 
 
 DICTIONARIES_ROOT = 'asset:plover_syllabic_chording:assets'
 DEFAULT_DICTIONARIES = (
-    'syll_user.syll',
-    'syll_english_basic.syll',
+    'syc_user.syc',
+    'syc_modifiers.syc',
+    'syc_commands.syc',
+    'syc_symbols.syc',
+    'syc_dutch_basic.syc',
+    'syc_dutch_pro.syc',
+    'syc_english_basic.syc',
+    'syc_english_pro.syc',
 )
