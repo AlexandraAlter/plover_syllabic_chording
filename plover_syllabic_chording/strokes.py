@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Union
 from bitstring import BitArray
 from enum import Enum
@@ -115,6 +115,9 @@ class Branch:
   def __repr__(self):
     return self.__format__(None)
 
+  def to_json(self):
+    return {}
+
   @classmethod
   def from_json(cls, obj):
     if obj is None:
@@ -175,6 +178,14 @@ class String:
   def __repr__(self):
     return self.__format__(None)
 
+  def to_json(self):
+    obj = {'order': self.order}
+    if self.mods:
+      obj['mods'] = self.mods
+    if self.string:
+      obj['string'] = self.string
+    return obj
+
   @classmethod
   def from_json(cls, obj):
     if obj is None:
@@ -189,35 +200,42 @@ class String:
 @dataclass
 class Stroke:
   n: int
-  keys: Optional[BitArray]
-  wildcard: Optional[BitArray]
-  mask: Optional[BitArray]
+  keys: Optional[str]
+  key_bits: Optional[BitArray] = field(init=False)
+  wildcard: Optional[str]
+  wildcard_bits: Optional[BitArray] = field(init=False)
+  mask: Optional[str]
+  mask_bits: Optional[BitArray] = field(init=False)
   output: Union[None, String, list[String]]
   if_true: Optional[Branch]
   if_false: Optional[Branch]
 
   def __post_init__(self):
     assert isinstance(self.n, int), 'n was not int'
-    assert isinstance(self.keys, (type(None), BitArray)), 'kind was not None/BitArray'
-    assert isinstance(self.wildcard, (type(None), BitArray)), 'wildcard was not None/BitArray'
+    assert isinstance(self.keys, (type(None), str)), 'keys was not None/str'
+    assert isinstance(self.wildcard, (type(None), str)), 'wildcard was not None/str'
     assert self.keys is not None or self.wildcard is not None, 'needs keys or wildcard'
-    assert isinstance(self.mask, (type(None), BitArray)), 'mask was not None/BitArray'
-    t_output = (type(None), String, list)
-    assert isinstance(self.output, t_output), 'output was not None/String/list'
+    assert isinstance(self.mask, (type(None), str)), 'mask was not None/str'
+    assert isinstance(self.output, (type(None), String, list)), 'output was not None/String/list'
     assert isinstance(self.if_true, (type(None), Branch)), 'if_true was not None/Branch'
     assert isinstance(self.if_false, (type(None), Branch)), 'if_false was not None/Branch'
-    assert not self.keys or len(self.keys) == len(KEYS), 'keys was the wrong length'
-    assert not self.mask or len(self.mask) == len(KEYS), 'mask was the wrong length'
+    self.key_bits = keys_to_bits(self.keys)
+    self.wildcard_bits = keys_to_bits(self.wildcard)
+    self.mask_bits = keys_to_bits(self.mask)
+    for field in ['key_bits', 'wildcard_bits', 'mask_bits']:
+      value = getattr(self, field)
+      assert isinstance(value, (type(None), BitArray)), f'{field} were not None/BitArray'
+      assert not value or len(value) == len(KEYS), f'{field} was the wrong length'
 
   def __format__(self, spec):
-    keys = ' keys=' + bits_to_keys(self.keys) if self.keys is not None else ''
-    wild = ' wild=' + bits_to_keys(self.wildcard) if self.wildcard is not None else ''
+    keys = ' keys=' + self.keys if self.keys is not None else ''
+    wild = ' wild=' + self.wildcard if self.wildcard is not None else ''
 
     if self.mask is None:
       mask = ''
     else:
       # output a star if all bits are set
-      mask = ' mask=' + (bits_to_keys(self.mask) if (~self.mask) else '*')
+      mask = ' mask=' + (self.mask if (~self.mask_bits) else '*')
 
     if isinstance(self.output, list):
       outputs = ', '.join(format(o, 'short') for o in self.output)
@@ -260,6 +278,22 @@ class Stroke:
 
     return (match, new_keys, branch)
 
+  def to_json(self):
+    obj = {}
+    if self.keys:
+      obj['keys'] = self.keys
+    if self.wildcard:
+      obj['wildcard'] = self.wildcard
+    if self.mask:
+      obj['mask'] = self.mask
+    if self.output:
+      obj['output'] = self.output.to_json()
+    if self.if_true:
+      obj['if_true'] = self.if_true.to_json()
+    if self.if_false:
+      obj['if_false'] = self.if_false.to_json()
+    return obj
+
   @classmethod
   def from_json(cls, obj, n=0):
     if obj is None:
@@ -267,10 +301,32 @@ class Stroke:
 
     return Stroke(
         n=n,
-        keys=keys_to_bits(obj.get('keys')),
-        wildcard=keys_to_bits(obj.get('wildcard')),
-        mask=keys_to_bits(obj.get('mask')),
+        keys=obj.get('keys'),
+        wildcard=obj.get('wildcard'),
+        mask=obj.get('mask'),
         output=String.from_json(obj.get('output')),
         if_true=Branch.from_json(obj.get('if_true')),
         if_false=Branch.from_json(obj.get('if_false')),
     )
+
+
+@dataclass
+class Lang:
+  strokes: list[Stroke]
+
+  def __len__(self):
+    return len(self.strokes)
+
+  def to_json(self):
+    return list(stroke.to_json() for stroke in self.strokes)
+
+  @classmethod
+  def from_json(cls, obj):
+    if obj is None:
+      return None
+    assert isinstance(obj, list)
+
+    strokes = (Stroke.from_json(s, n=i) for i, s in enumerate(obj))
+    filtered = (s for s in strokes if s is not None)
+
+    return Lang(strokes)

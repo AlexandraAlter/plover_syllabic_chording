@@ -20,6 +20,19 @@ from plover_syllabic_chording.system import UNDO_STROKE_STENO
 from plover_syllabic_chording.strokes import Stroke, keys_to_bits, bits_to_keys
 
 
+class SyllabicJSONEncoder(json.JSONEncoder):
+  def encode(self, o):
+    assert isinstance(o, list), 'this encoder must take a list'
+
+    strokes = []
+    for stroke in o:
+      chunks = self.iterencode(stroke, _one_shot=False)
+      if not isinstance(chunks, (list, tuple)):
+        chunks = list(chunks)
+      strokes.append(''.join(chunks))
+    return '[\n  ' + ',\n  '.join(strokes) + '\n]'
+
+
 class SyllabicDict(StenoDictionary):
   readonly = True
 
