@@ -201,7 +201,7 @@ class String:
 class Stroke:
   n: int
   keys: Optional[str]
-  key_bits: Optional[BitArray] = field(init=False)
+  keys_bits: Optional[BitArray] = field(init=False)
   wildcard: Optional[str]
   wildcard_bits: Optional[BitArray] = field(init=False)
   mask: Optional[str]
@@ -219,10 +219,10 @@ class Stroke:
     assert isinstance(self.output, (type(None), String, list)), 'output was not None/String/list'
     assert isinstance(self.if_true, (type(None), Branch)), 'if_true was not None/Branch'
     assert isinstance(self.if_false, (type(None), Branch)), 'if_false was not None/Branch'
-    self.key_bits = keys_to_bits(self.keys)
+    self.keys_bits = keys_to_bits(self.keys)
     self.wildcard_bits = keys_to_bits(self.wildcard)
     self.mask_bits = keys_to_bits(self.mask)
-    for field in ['key_bits', 'wildcard_bits', 'mask_bits']:
+    for field in ['keys_bits', 'wildcard_bits', 'mask_bits']:
       value = getattr(self, field)
       assert isinstance(value, (type(None), BitArray)), f'{field} were not None/BitArray'
       assert not value or len(value) == len(KEYS), f'{field} was the wrong length'
@@ -261,14 +261,14 @@ class Stroke:
     if keys is None:
       return (False, keys, self.if_false)
 
-    mask = self.mask or self.keys or self.wildcard
+    mask = self.mask_bits or self.keys_bits or self.wildcard_bits
     masked_keys = keys & mask
 
     if self.keys is not None:
-      match = bool(self.keys == masked_keys)
+      match = bool(self.keys_bits == masked_keys)
       new_keys = keys & (~mask) if match else keys
     elif self.wildcard is not None:
-      matched_keys = self.wildcard & masked_keys
+      matched_keys = self.wildcard_bits & masked_keys
       match = bool(matched_keys)
       new_keys = keys & (~matched_keys) if match else keys
     else:
