@@ -6,26 +6,26 @@ from dataclasses import dataclass
 from plover.system import english_stenotype
 
 KEYS = (
+    '#-', # shifts
     # left consonants
     'Z-', 'F-', 'S-', 'P-', 'T-', 'C-', 'K-', 'J-', 'R-',
     'L-', 'N-',
-    'H-',
+    '´-', # accents
+    'H-', # caps
     # vowels
-    'Y-', '-Y',
+    'Y-',
     'I-', 'O-', 'E-',
-    'U-', '-U', 'A-', '-A',
+    "'-", # symbols
+    'U-', 'A-',
+    '-A', '-U',
+    "-'", # symbols
     '-O', '-I', '-E',
+    '-Y',
     # right consonants
+    '-_', # spacing
+    '-`', # accents
     '-N', '-L',
     '-K', '-J', '-R', '-P', '-T', '-C', '-F', '-S', '-Z',
-    # symbols
-    "'-", "-'",
-    # accents
-    '´-', '-`',
-    # shifts
-    '-#',
-    # spacing
-    '-_',
 ) # yapf: disable
 
 
@@ -64,7 +64,7 @@ KEYMAPS = {
         '-A': 'j',  '-E': 'k',  '-R': 'l',  '-C': ';',  '-S': '[',  '-Z': (']', "'"),
         '-Y': 'm',  '-N': ',',  '-L': '.',
 
-        '´-': 'z',  '-#': 'x',  '-`': '/',
+        '´-': 'z',  '#-': 'x',  '-`': '/',
         'H-': 'c',  '-_': 'space',
 
         'arpeggiate': 'Return',
@@ -75,16 +75,16 @@ KEYMAPS = {
                                     'P-': '#3',   'K-': '#4',   'I-': '#5',   "'-": '#6',
                       'F-': 'S1-',  'T-': 'T-',   'J-': 'P-',   'O-': 'H-',   'U-': '*1',
         'Z-': 'Fn',   'S-': 'S2-',  'C-': 'K-',   'R-': 'W-',   'E-': 'R-',   'A-': '*2',
-                                                  'L-': 'A-',   'N-': 'O-',   'Y-': '#2',
+                                                  'L-': 'A-',   'N-': 'O-',   'Y-': '#1',
 
         "-'": '#7',   '-O': '#8',   '-K': '#9',   '-P': '#A',
         '-U': '*3',   '-I': '-F',   '-J': '-P',   '-T': '-L',   '-F': '-T',
         '-A': '*4',   '-E': '-R',   '-R': '-B',   '-C': '-G',   '-S': '-S',   '-Z': '-Z',
-        '-Y': '#B',   '-N': '-E',   '-L': '-U',
+        '-Y': '#C',   '-N': '-E',   '-L': '-U',
 
-        '-#': ('#1', '#C'),
-        '´-': 'pwr', '-`': '-D',
+        '#-': '-D',
         'H-': 'res1', '-_': 'res2',
+        '´-': '#2',   '-`': '#B',
 
         'no-op': (),
     },
@@ -93,12 +93,12 @@ KEYMAPS = {
 
 DICTIONARIES_ROOT = 'asset:plover_syllabic_chording:assets'
 DEFAULT_DICTIONARIES = (
-    'syc_user.sy_json',
-    'syc_modifiers.sy_json',
-    'syc_commands.sy_json',
-    'syc_symbols.sy_json',
-    'syc_dutch_basic.sy_json',
-    'syc_dutch_pro.sy_json',
-    'syc_english_basic.sy_json',
-    'syc_english_pro.sy_json',
+    'syc_user.jsyc',
+    'syc_modifiers.jsyc',
+    'syc_commands.jsyc',
+    'syc_symbols.jsyc',
+    'syc_dutch_basic.jsyc',
+    'syc_dutch_pro.jsyc',
+    'syc_english_basic.jsyc',
+    'syc_english_pro.jsyc',
 )
