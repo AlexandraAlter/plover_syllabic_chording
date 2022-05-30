@@ -5,7 +5,7 @@ A syllabic chording system for Plover, reminiscent of how the Veyboard and Velot
 ## Development Status
 
 This project is largely for personal use, and no gurantees of function, form or sanity can be given.
-While every attempt will be made to fix any bugs found in this project, nothing is guranteed.
+While every attempt will be made to fix any bugs found in this project, nothing is guaranteed.
 
 ## Affiliation
 
@@ -21,7 +21,7 @@ If the system is changed, the extension will not interfere with normal operation
 ## Recommended Keyboard
 
 The default layouts and dictionaries are very much personalized, and may be inappropriate for any other user.
-I use a ZSA Moonlander Mark I alongside [custom firmware](https://github.com/AlexandraAlter/qmk_firmware/tree/master/keyboards/moonlander/keymaps/AlexandraAlter).
+I use a ZSA Moonlander Mark I alongside [custom firmware](https://github.com/AlexandraAlter/qmk_firmware/tree/master/keyboards/moonlander/keymaps/alexandra-alter).
 
 ## Technical Details
 
