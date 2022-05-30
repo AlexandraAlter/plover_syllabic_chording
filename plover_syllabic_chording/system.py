@@ -37,10 +37,13 @@ SUFFIX_KEYS = ()
 
 # this is intentionally unused
 # there are far too many keys and strokes
-NUMBER_KEY = ''
+NUMBER_KEY = None
 
 # this is intentionally unused
 NUMBERS = {}
+
+# this is intentionally unused
+FERAL_NUMBER_KEY = False
 
 UNDO_STROKE_STENO = 'SN-NS'
 
@@ -90,12 +93,12 @@ KEYMAPS = {
 
 DICTIONARIES_ROOT = 'asset:plover_syllabic_chording:assets'
 DEFAULT_DICTIONARIES = (
-    'syc_user.syc',
-    'syc_modifiers.syc',
-    'syc_commands.syc',
-    'syc_symbols.syc',
-    'syc_dutch_basic.syc',
-    'syc_dutch_pro.syc',
-    'syc_english_basic.syc',
-    'syc_english_pro.syc',
+    'syc_user.sy_json',
+    'syc_modifiers.sy_json',
+    'syc_commands.sy_json',
+    'syc_symbols.sy_json',
+    'syc_dutch_basic.sy_json',
+    'syc_dutch_pro.sy_json',
+    'syc_english_basic.sy_json',
+    'syc_english_pro.sy_json',
 )
