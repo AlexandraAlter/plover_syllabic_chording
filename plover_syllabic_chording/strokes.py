@@ -286,7 +286,9 @@ class Stroke:
       obj['wildcard'] = self.wildcard
     if self.mask:
       obj['mask'] = self.mask
-    if self.output:
+    if self.output and isinstance(self.output, list):
+      obj['output'] = [o.to_json() for o in self.output]
+    elif self.output and isinstance(self.output, String):
       obj['output'] = self.output.to_json()
     if self.if_true:
       obj['if_true'] = self.if_true.to_json()
