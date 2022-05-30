@@ -1,2 +1,2 @@
 from .strokes import *
-from .dictionary import SyllabicJSONEncoder
+from .json_dict import SyllabicJSONEncoder
